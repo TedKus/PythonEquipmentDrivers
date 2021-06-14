@@ -5,11 +5,10 @@ from time import sleep
 class Agilent_34972A(Scpi_Instrument):
     """
     Agilent_34972A()
-
-    address: str, address of the connected data aquisition dac
-    ch_change_time, optional: mux switching time
     object for accessing basic functionallity of the AG_34972A data aquisition
     dac.
+    address: str, address of the connected data aquisition dac
+    ch_change_time, optional: mux switching time
 
     Additional Information:
     functions based on 34972-90001.pdf at
