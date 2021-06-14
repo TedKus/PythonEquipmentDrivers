@@ -570,15 +570,14 @@ class Agilent_34972A(Scpi_Instrument):
             if resolution or nplc:
                 if not usefreq:
                     x = ':RES ' if resolution else ':NPLC '
-                    for i in range(len(chanlist)):
-                        string3 = (f"SENS:{mode}"
-                                   f"{acdc}"
-                                   f"{x}"
-                                   f"{resolution if resolution else nplc}"
-                                   f"(@{chanlist[i]})")
-                        self.instrument.write(string3, **kwargs)
-                        if verbose:
-                            print(string3)
+                    string3 = (f"SENS:{mode}"
+                                f"{acdc}"
+                                f"{x}"
+                                f"{resolution if resolution else nplc}"
+                                f"(@{chanstr})")
+                    self.instrument.write(string3, **kwargs)
+                    if verbose:
+                        print(string3)
 
         return
 
