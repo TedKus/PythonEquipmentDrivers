@@ -80,24 +80,24 @@ class Agilent_34972A(Scpi_Instrument):
                      '1E6': '1E6,',
                      '10E6': '10E6,',
                      '100E6': '100E6,'}
-    nplc = {'MIN': 'MIN,',
-            'MAX': 'MAX,',
-            0.02: '0.02,',
-            0.2: '0.2,',
-            1: '1,',
-            2: '2,',
-            10: '10,',
-            20: '20,',
-            100: '100,',
-            200: '200,',
-            '0.02': '0.02,',
-            '0.2': '0.2,',
-            '1': '1,',
-            '2': '2,',
-            '10': '10,',
-            '20': '20,',
-            '100': '100,',
-            '200': '200,'}
+    nplc = {'MIN': 'MIN',
+            'MAX': 'MAX',
+            0.02: '0.02',
+            0.2: '0.2',
+            1: '1',
+            2: '2',
+            10: '10',
+            20: '20',
+            100: '100',
+            200: '200',
+            '0.02': '0.02',
+            '0.2': '0.2',
+            '1': '1',
+            '2': '2',
+            '10': '10',
+            '20': '20',
+            '100': '100',
+            '200': '200'}
     valid_resolutions = {'MIN': 0.0001,  # lookup based on nplc
                          'MAX': 0.00000022,  # this * range = resolution
                          '0.02': 0.0001,
@@ -542,11 +542,11 @@ class Agilent_34972A(Scpi_Instrument):
         else:
             raise ValueError("Invalid nplc option")
 
-        if resolution and signal_range:
+        if resolution and signal_range:  # both can be sent together
             string = (f"CONF:{mode}"
                       f"{acdc} "
                       f"{signal_range}"
-                      f"{resolution}"
+                      f"{resolution},"
                       f"(@{chanstr})")
             if kwargs.get('verbose', False):
                 print(string)
@@ -555,12 +555,12 @@ class Agilent_34972A(Scpi_Instrument):
             if signal_range:
                 string = (f"CONF:{mode}"
                           f"{acdc} "
-                          f"{signal_range}"
+                          f"{signal_range},"
                           f"(@{chanstr})")
                 if verbose:
                     print(string)
                 self.instrument.write(string, **kwargs)
-            else:
+            else:  # Range is AUTO so seperate strings needed!
                 string2 = (f"CONF:{mode}"
                            f"{acdc} "
                            f"(@{chanstr})")
@@ -568,13 +568,14 @@ class Agilent_34972A(Scpi_Instrument):
                 if verbose:
                     print(string2)
             if resolution or nplc:
-                if not usefreq:
+                if not usefreq:  # frequency has special rules too, this is
+                                # avoiding the issue at the moment!
                     x = ':RES ' if resolution else ':NPLC '
                     string3 = (f"SENS:{mode}"
-                                f"{acdc}"
-                                f"{x}"
-                                f"{resolution if resolution else nplc}"
-                                f"(@{chanstr})")
+                               f"{acdc}"
+                               f"{x}"
+                               f"{resolution if resolution else nplc},"
+                               f"(@{chanstr})")
                     self.instrument.write(string3, **kwargs)
                     if verbose:
                         print(string3)
