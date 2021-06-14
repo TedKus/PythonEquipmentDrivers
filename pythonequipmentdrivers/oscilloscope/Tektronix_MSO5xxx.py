@@ -185,7 +185,8 @@ class Tektronix_MSO5xxx(Scpi_Instrument):
         self.instrument.write(f'CH{int(channel)}:LAB:XPOS {float(x_coord)}')
         self.instrument.write(f'CH{int(channel)}:LAB:YPOS {float(y_coord)}')
 
-    def get_channel_label_position(self, channel: int) -> tuple[float, float]:
+    def get_channel_label_position(self,
+                                   channel: int) -> "tuple[float, float]":
         """
         get_channel_label_position(channel)
 
