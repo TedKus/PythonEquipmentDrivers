@@ -509,18 +509,16 @@ class Agilent_34972A(Scpi_Instrument):
 
         try:
             signal_range = signal_range.upper()
-            if signal_range.upper() == 'AUTO':  # if not str, doesn't run this
-                signal_range = False
+            try:
+                signal_range = (self.valid_cranges[signal_range] if usecurrent
+                                else self.valid_Rranges[signal_range] if useres
+                                else self.valid_ranges[signal_range])
+            except (ValueError, KeyError):
+                if verbose:
+                    print("signal_range not in list, using max")
+                signal_range = self.valid_ranges['MAX']
         except AttributeError:
             pass
-        try:
-            signal_range = (self.valid_cranges[signal_range] if usecurrent
-                            else self.valid_Rranges[signal_range] if useres
-                            else self.valid_ranges[signal_range])
-        except (ValueError, KeyError):
-            if verbose:
-                print("signal_range not in list, using max")
-            signal_range = self.valid_ranges['MAX']
 
         try:
             nplc = nplc.upper()
