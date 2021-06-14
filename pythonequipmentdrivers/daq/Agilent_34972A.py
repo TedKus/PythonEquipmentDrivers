@@ -459,7 +459,7 @@ class Agilent_34972A(Scpi_Instrument):
 
     def config_chan(self, chan, mode='volt', acdc='dc',
                     signal_range='auto', resolution=None,
-                    nplc=0.02, verbose: bool = False, **kwargs):
+                    nplc=None, verbose: bool = False, **kwargs):
         """config_chan(#)
 
         Args:
