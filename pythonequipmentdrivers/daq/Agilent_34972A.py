@@ -521,23 +521,23 @@ class Agilent_34972A(Scpi_Instrument):
 
         try:
             nplc = nplc.upper()
+            if nplc in self.nplc:
+                nplc = self.nplc[nplc]
+                if usefreq:
+                    # if resolution is not None:
+                    #     pass
+                    # else:
+                    #     # TypeError: can't multiply sequence by
+                    #     # non-int of type 'float'
+                    #     # didn't finish, had to abandon this special case due to
+                    #     # complexity and time constraints
+                    #     resolution = (self.valid_resolutions[nplc] *
+                    #                   signal_range if signal_range else 300)
+                    nplc = ''  # frequency doens't use this either
+            else:
+                raise ValueError("Invalid nplc option")
         except AttributeError:
-            pass
-        if nplc in self.nplc:
-            nplc = self.nplc[nplc]
-            if usefreq:
-                # if resolution is not None:
-                #     pass
-                # else:
-                #     # TypeError: can't multiply sequence by
-                #     # non-int of type 'float'
-                #     # didn't finish, had to abandon this special case due to
-                #     # complexity and time constraints
-                #     resolution = (self.valid_resolutions[nplc] *
-                #                   signal_range if signal_range else 300)
-                nplc = ''  # frequency doens't use this either
-        else:
-            raise ValueError("Invalid nplc option")
+            nplc = ''
 
         if resolution and signal_range:  # both can be sent together
             string = (f"CONF:{mode}"
