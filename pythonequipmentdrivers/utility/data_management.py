@@ -73,9 +73,15 @@ def log_data(directory=None, file_name=None, *data, init=False):
             cwd = Path(__file__).parent.resolve()
         except NameError:  # command line is being used, use active directory
             cwd = Path().parent.resolve()
-
-    with open(cwd / f'{file_name}.csv', 'w' if init else 'a') as f:
-        print(*data, sep=',', file=f)
+    try:
+        with open(cwd / f'{file_name}.csv', 'w' if init else 'a') as f:
+            print(*data, sep=',', file=f)
+    except PermissionError:
+        print(f"PermissionError, your output file {file_name} is locked or "
+              "open elsewhere!  Using {file_name}_ instead.")
+        file_name += '_'
+        with open(cwd / f'{file_name}.csv', 'w' if init else 'a') as f:
+            print(*data, sep=',', file=f)
 
     return None
 
