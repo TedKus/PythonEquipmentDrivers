@@ -86,7 +86,7 @@ def log_data(directory=None, file_name=None, *data, init=False):
     return None
 
 
-def dump_data(directory, file_name, data):
+def dump_data(directory, file_name, data, init=False):
     """
     dump_data(directory, file_name, data)
 
@@ -120,10 +120,27 @@ def dump_data(directory, file_name, data):
         NoneType
     """
 
-    with open(Path(directory) / f'{file_name}.csv', 'w') as f:
+    if file_name is None:
+        file_name = 'data'
 
-        for item in data:
-            print(*item, sep=',', file=f)
+    if directory is not None:
+        cwd = Path(directory)
+    else:
+        try:
+            cwd = Path(__file__).parent.resolve()
+        except NameError:  # command line is being used, use active directory
+            cwd = Path().parent.resolve()
+    try:
+        with open(cwd / f'{file_name}.csv', 'w' if init else 'a') as f:
+            for item in data:
+                print(*item, sep=',', file=f)
+    except PermissionError:
+        print(f"PermissionError, your output file {file_name} is locked or "
+              "open elsewhere!  Using {file_name}_ instead.")
+        file_name += '_'
+        with open(cwd / f'{file_name}.csv', 'w' if init else 'a') as f:
+            for item in data:
+                print(*item, sep=',', file=f)
 
     return None
 
