@@ -2,7 +2,7 @@ from pythonequipmentdrivers import Scpi_Instrument
 import struct
 import numpy as np
 from pathlib import Path
-from typing import Union
+from typing import Union, Tuple
 
 
 class Tektronix_MSO5xxx(Scpi_Instrument):
@@ -43,9 +43,8 @@ class Tektronix_MSO5xxx(Scpi_Instrument):
 
         cmd_str = f"SEL:CH{int(channel)} {'ON' if state else 'OFF'}"
         self.instrument.write(cmd_str)
-        return None
 
-    def get_channel_data(self, *channels: int, **kwargs) -> tuple:
+    def get_channel_data(self, *channels: int, **kwargs) -> Tuple:
         """
         get_channel_data(*channels, start_percent=0, stop_percent=100,
                          return_time=True, dtype=np.float32)
@@ -145,7 +144,6 @@ class Tektronix_MSO5xxx(Scpi_Instrument):
         """
 
         self.instrument.write(f'CH{int(channel)}:LAB:NAM "{label}"')
-        return None
 
     def get_channel_label(self, channel: int) -> str:
         """
@@ -172,7 +170,7 @@ class Tektronix_MSO5xxx(Scpi_Instrument):
 
         Args:
             channel (int): channel number to adjust
-            pos (tuple[float, float]): the relative x, y positon of
+            pos (Tuple[float, float]): the relative x, y positon of
                 the channel label with respect to the waveform as number of
                 divisions.
         """
@@ -186,7 +184,7 @@ class Tektronix_MSO5xxx(Scpi_Instrument):
         self.instrument.write(f'CH{int(channel)}:LAB:YPOS {float(y_coord)}')
 
     def get_channel_label_position(self,
-                                   channel: int) -> "tuple[float, float]":
+                                   channel: int) -> "Tuple[float, float]":
         """
         get_channel_label_position(channel)
 
@@ -197,7 +195,7 @@ class Tektronix_MSO5xxx(Scpi_Instrument):
             channel (int): hannel number to query
 
         Returns:
-            tuple[float, float]: the relative x, y positon of the channel label
+            Tuple[float, float]: the relative x, y positon of the channel label
                 with respect to the waveform as a number of divisions.
         """
 
@@ -255,7 +253,6 @@ class Tektronix_MSO5xxx(Scpi_Instrument):
         """
 
         self.instrument.write(f'CH{int(channel)}:SCA {float(scale)}')
-        return None
 
     def get_channel_scale(self, channel):
         """
@@ -807,7 +804,7 @@ class Tektronix_MSO5xxx(Scpi_Instrument):
         self.instrument.write(f'MEASU:MEAS{meas_idx}:TYP UNDEFINED')
         return None
 
-    def get_measure_data(self, *meas_idx: int) -> Union[float, tuple]:
+    def get_measure_data(self, *meas_idx: int) -> "Union[float, tuple]":
         """
         get_measure_data(*meas_idx)
 

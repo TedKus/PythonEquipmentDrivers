@@ -1,6 +1,6 @@
 from pythonequipmentdrivers import Scpi_Instrument
 import numpy as np
-from typing import Union
+from typing import Union, Tuple
 from pathlib import Path
 
 
@@ -53,7 +53,6 @@ class Lecroy_WR8xxx(Scpi_Instrument):
         """
 
         self.instrument.write(f'C{int(channel)}:VDIV {float(scale)}')
-        return None
 
     def get_channel_scale(self, channel: int) -> float:
         """
@@ -88,8 +87,8 @@ class Lecroy_WR8xxx(Scpi_Instrument):
         """
 
         if kwargs.get('use_divisions', False):
-            offset = float(off)*self.get_channel_scale(int(channel))
-        self.instrument.write(f"C{int(channel)}:OFFSET {float(offset)}")
+            off = float(off)*self.get_channel_scale(int(channel))
+        self.instrument.write(f"C{int(channel)}:OFFSET {float(off)}")
 
     def get_channel_offset(self, channel: int) -> float:
         """
@@ -126,12 +125,13 @@ class Lecroy_WR8xxx(Scpi_Instrument):
                         'ac_1meg': 'A1M', 'ac': 'A1M',
                         'gnd': 'gnd'}
 
-        coupling = coupling_map[coupling.lower()]
+        coupling = str(coupling).lower()
         if coupling not in coupling_map.keys():
             raise ValueError(f"Invalid Coupling option: {coupling}. "
                              f"Suuport options are: {coupling_map.keys()}")
 
-        self.instrument.write(f"C{int(channel)}:COUPLING {coupling}")
+        cmd_str = f"C{int(channel)}:COUPLING {coupling_map[coupling]}"
+        self.instrument.write(cmd_str)
 
     def get_channel_coupling(self, channel: int) -> str:
         """
@@ -207,7 +207,7 @@ class Lecroy_WR8xxx(Scpi_Instrument):
         resp_fields = ['index', 'type', 'source', 'status']
         return {k: v for k, v in zip(resp_fields, info.split(','))}
 
-    def get_measure_data(self, *meas_idx: int) -> Union[float, tuple]:
+    def get_measure_data(self, *meas_idx: int) -> "Union[float, tuple]":
         """
         get_measure_data(*meas_idx)
 
@@ -498,7 +498,7 @@ class Lecroy_WR8xxx(Scpi_Instrument):
 
         source = kwargs.get('source', self.get_trigger_source())
 
-        slope = slope.upper()
+        slope = str(slope).upper()
         if slope not in valid_options.keys():
             raise ValueError('Invalid option for Arg "slope".'
                              f' Valid option are {valid_options.keys()}')
@@ -655,7 +655,7 @@ class Lecroy_WR8xxx(Scpi_Instrument):
             description[key] = value
         return description
 
-    def get_channel_data(self, *channels: int, **kwargs) -> tuple:
+    def get_channel_data(self, *channels: int, **kwargs) -> Tuple:
         """
         get_channel_data(*channels, return_time=True, dtype=np.float32)
 
@@ -735,7 +735,6 @@ class Lecroy_WR8xxx(Scpi_Instrument):
 
         q_str = f"""vbs 'app.acquisition.C{channel}.LabelsText = "{label}" '"""
         self.instrument.write(q_str)
-        return None
 
     def set_channel_display(self, channel, mode):
         # mode = "true" or "false"
@@ -781,9 +780,8 @@ class Lecroy_WR8xxx(Scpi_Instrument):
         else:
             raise ValueError('Invalid duration, valid times (s): ' +
                              ', '.join(map(str, valid_durs)))
-        return None
 
-    def get_persistence_time(self) -> Union[float, str]:
+    def get_persistence_time(self) -> "Union[float, str]":
         """
         get_persistence_time()
 
