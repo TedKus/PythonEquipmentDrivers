@@ -755,6 +755,39 @@ class Lecroy_WR8xxx(Scpi_Instrument):
 
         return ' '.join(response.strip().split()[1:])
 
+    def set_channel_name(self, channel: int, name: str) -> None:
+        """
+        set_channel_name(channel, name)
+
+        updates the text name on a channel specified by "channel" with the
+        value given in "name".
+
+        Args:
+            channel (int): channel number to update label of.
+            name (str): text name to assign to the specified channel
+        """
+
+        q_str = f"""vbs 'app.acquisition.C{channel}.Name = "{name}" '"""
+        self.instrument.write(q_str)
+
+    def get_channel_name(self, channel: int) -> str:
+        """
+        get_channel_name(channel)
+
+        Queries the text name of the channel specified by "channel".
+
+        Args:
+            channel (int): channel number to query name of.
+        Returns:
+            (str): text name to assigned to the specified channel
+        """
+
+        q_str = f"""vbs? 'return = app.acquisition.C{channel}.Name'"""
+
+        response = self.instrument.query(q_str)
+
+        return ' '.join(response.strip().split()[1:])
+
     def set_channel_display(self, channel, mode):
         # mode = "true" or "false"
         q_str = f"""vbs 'app.acquisition.C{channel}.View = {mode} '"""
