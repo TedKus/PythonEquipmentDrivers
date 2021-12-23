@@ -755,7 +755,8 @@ class Lecroy_WR8xxx(Scpi_Instrument):
 
         return ' '.join(response.strip().split()[1:])
 
-    def set_channel_name(self, channel: int, name: str) -> None:
+    def set_channel_name(self, channel: int, name: str, automation: str = None,
+                         remote: str = None) -> None:
         """
         set_channel_name(channel, name)
 
@@ -766,8 +767,17 @@ class Lecroy_WR8xxx(Scpi_Instrument):
             channel (int): channel number to update label of.
             name (str): text name to assign to the specified channel
         """
-
-        q_str = f"""vbs 'app.acquisition.C{channel}.Name = "{name}" '"""
+        # TODO: DANGER WILL ROBINSON! Something isn't right!
+        # screenname = name  # there are three names, only using screenname
+        if name == '':
+            raise IOError('Invalid name specified (empty), you must specify '
+                          'the name only, or the three: '
+                          'name, automation, remote')
+        if automation is None:
+            automation = f'C{channel}'
+        if remote is None:
+            remote = f'C{channel}'
+        q_str = f"""vbs 'app.acquisition.C{channel}.Name = "{name}|{automation}|{remote}" '"""  # noqa E502
         self.instrument.write(q_str)
 
     def get_channel_name(self, channel: int) -> str:
