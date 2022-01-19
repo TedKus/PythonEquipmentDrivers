@@ -38,6 +38,26 @@ class Agilent_33250A(Scpi_Instrument):
         response = self.instrument.query('OUTP:LOAD?')
         return float(response)
 
+    def set_output_polarity(self, polarity: bool = True) -> None:
+        """set_output_polarity()
+        Invert the waveform relative to the offset voltage. In the normal mode
+        (default), the waveform goes positive during the first part of the cycle.
+        In the inverted mode, the waveform goes negative during the first part of
+        the cycle.
+
+        Args:
+            polarity (bool, optional): True == Normal, False == Inverted.
+            Defaults to True.
+        """
+        self.instrument.write(f"OUTP:POL {'NORM' if polarity else 'INV'}")
+
+    def get_output_polarity(self) -> bool:
+        response = self.instrument.query("OUTP:POL?")
+        if response == 'NORM':
+            return True
+        elif response == 'INV':
+            return False
+
     def set_waveform_type(self, waveform: str) -> None:
 
         wave = str(waveform).upper()
@@ -51,6 +71,19 @@ class Agilent_33250A(Scpi_Instrument):
         response = self.instrument.query('FUNC?')
         wave = response.strip()
         return wave.upper()
+
+    def get_voltage_units(self) -> str:
+        return self.instrument.query('VOLT:UNIT?')
+
+    def set_voltage_units(self, units: str = 'VPP') -> None:
+        """
+        Valid options are VPP, VRMS, DBM
+        """
+
+        valid_str = ('VPP', 'VRMS', 'DBM')
+
+        if isinstance(units, str) and (units.upper() in valid_str):
+            self.instrument.write(f'VOLT:UNIT {units.upper()}')
 
     def set_voltage_amplitude(self, voltage: float) -> None:
         self.instrument.write(f'VOLT {float(voltage)}')
