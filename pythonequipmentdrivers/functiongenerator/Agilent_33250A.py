@@ -12,7 +12,7 @@ class Agilent_33250A(Scpi_Instrument):
     generator
     """
 
-    valid_wave_types = ('SIN', 'SQU', 'RAMP', 'PULSE', 'NOIS', 'DC', 'USER')
+    valid_wave_types = ('SIN', 'SQU', 'RAMP', 'PULS', 'NOIS', 'DC', 'USER')
 
     def set_output_state(self, state: bool) -> None:
         self.instrument.write(f"OUTP {1 if state else 0}")
@@ -41,9 +41,9 @@ class Agilent_33250A(Scpi_Instrument):
     def set_output_polarity(self, polarity: bool = True) -> None:
         """set_output_polarity()
         Invert the waveform relative to the offset voltage. In the normal mode
-        (default), the waveform goes positive during the first part of the cycle.
-        In the inverted mode, the waveform goes negative during the first part of
-        the cycle.
+        (default), the waveform goes positive during the first part of the
+        cycle. In the inverted mode, the waveform goes negative during the
+        first part of the cycle.
 
         Args:
             polarity (bool, optional): True == Normal, False == Inverted.
@@ -60,7 +60,8 @@ class Agilent_33250A(Scpi_Instrument):
 
     def set_waveform_type(self, waveform: str) -> None:
 
-        wave = str(waveform).upper()
+        wave = str(waveform).upper()[0:4]
+
         if (wave in self.valid_wave_types):
             self.instrument.write(f'FUNC {wave}')
         else:
