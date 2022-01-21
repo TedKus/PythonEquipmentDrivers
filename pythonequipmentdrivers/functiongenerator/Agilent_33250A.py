@@ -130,6 +130,9 @@ class Agilent_33250A(Scpi_Instrument):
             return True
         return False
 
+    def set_voltage_auto_range_once(self) -> None:
+        self.instrument.write("VOLT:RANG:AUTO ONCE")
+
     def set_burst_state(self, state: bool) -> None:
         self.instrument.write('BURS:STAT {}'.format(1 if state else 0))
 
