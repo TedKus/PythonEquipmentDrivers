@@ -1,5 +1,5 @@
 from typing import Sequence
-from pythonequipmentdrivers import Scpi_Instrument
+from pythonequipmentdrivers import Scpi_Instrument, VisaIOError
 import numpy as np
 
 
@@ -62,6 +62,15 @@ class Keysight_33500B(Scpi_Instrument):
         freq, amp, off = map(float, wave_info.split(','))
         return (wave_type, freq, amp, off)
 
+    def set_waveform_type(self, waveform: str, source: int = 1) -> None:
+
+        wave = str(waveform).upper()
+        if (wave in self.valid_wave_types):
+            self.instrument.write(f'SOUR{source}:FUNC {wave}')
+        else:
+            raise ValueError('Invalide Waveform type. '
+                             f'Supported: {self.valid_wave_types}')
+
     def set_voltage(self, voltage: float, source: int = 1):
         self.instrument.write(f'SOUR{source}:VOLT {voltage}')
         return None
@@ -69,6 +78,12 @@ class Keysight_33500B(Scpi_Instrument):
     def get_voltage(self, source: int = 1):
         response = self.instrument.query(f'SOUR{source}:VOLT?')
         return float(response)
+
+    def set_voltage_amplitude(self, voltage: float, source: int = 1) -> None:
+        self.set_voltage(voltage, source)
+
+    def get_voltage_amplitude(self, source: int = 1) -> float:
+        return self.get_voltage(source)
 
     def set_voltage_offset(self, voltage: float, source: int = 1):
         self.instrument.write(f'SOUR{source}:VOLT:OFFS {voltage}')
@@ -101,6 +116,16 @@ class Keysight_33500B(Scpi_Instrument):
     def get_frequency(self, source: int = 1):
         response = self.instrument.query(f'SOUR{source}:FREQ?')
         return float(response)
+
+    def set_voltage_auto_range(self, state: bool, source: int = 1) -> None:
+        self.instrument.write(f"SOUR{source}:VOLT:RANG:AUTO "
+                              f"{'ON' if state else 'OFF'}")
+
+    def get_voltage_auto_range(self, source: int = 1) -> bool:
+        response = self.instrument.query(f'SOUR{source}:VOLT:RANG:AUTO?')
+        if '1' in response:
+            return True
+        return False
 
     def set_wave_type(self, wave_type: str, source: int = 1):
         self.instrument.write(f'SOUR{source}:FUNC {wave_type}')
@@ -249,6 +274,9 @@ class Keysight_33500B(Scpi_Instrument):
     def trigger(self, source: int = 1) -> None:
         self.instrument.write(f'TRIG{int(source)}')
 
+    # def trigger_channel_on_off(self, source: int = 1) -> None:
+    #     self.instrument.write(f'TRIG{int(source)}')
+
     def get_trigger_count(self, source: int = 1):
         response = self.instrument.query(f'TRIG{source}:COUN?')
         return int(float(response))
@@ -340,6 +368,40 @@ class Keysight_33500B(Scpi_Instrument):
         response = self.instrument.query(f'OUTP{source}:LOAD?')
         return float(response)
 
+    def set_output_polarity(self, polarity: bool = True, source=1) -> None:
+        """set_output_polarity()
+        Invert the waveform relative to the offset voltage. In the normal mode
+        (default), the waveform goes positive during the first part of the
+        cycle. In the inverted mode, the waveform goes negative during the
+        first part of the cycle.
+
+        Args:
+            polarity (bool, optional): True == Normal, False == Inverted.
+            Defaults to True.
+        """
+        self.instrument.write(f"OUTP{source}:POL "
+                              f"{'NORM' if polarity else 'INV'}")
+
+    def get_output_polarity(self, source=1) -> bool:
+        response = self.instrument.query(f"OUTP{source}:POL?")
+        if response == 'NORM':
+            return True
+        elif response == 'INV':
+            return False
+
+    def get_voltage_units(self, source: int = 1) -> str:
+        return self.instrument.query(f'SOUR{source}:VOLT:UNIT?')
+
+    def set_voltage_units(self, units: str = 'VPP', source: int = 1) -> None:
+        """
+        Valid options are VPP, VRMS, DBM
+        """
+
+        valid_str = ('VPP', 'VRMS', 'DBM')
+
+        if isinstance(units, str) and (units.upper() in valid_str):
+            self.instrument.write(f'SOUR{source}:VOLT:UNIT {units.upper()}')
+
     def set_display_text(self, text: str):
         self.instrument.write(f'DISP:TEXT "{text}"')
         return None
@@ -352,23 +414,47 @@ class Keysight_33500B(Scpi_Instrument):
     def clear_display_text(self):
         return self.set_display_text("")
 
-    def store_arbitrary_waveform(self, data: Sequence, arb_name: str) -> None:
+    def store_arbitrary_waveform(self, data: Sequence, arb_name: str,
+                                 clear: bool = True) -> None:
 
         if not (8 < len(data) < 65536):
             raise ValueError('data must be between 8 and 65536 samples')
 
         data = np.array(data)
-
-        data -= data.mean()  # symmetric
-        data /= data.max()  # spans +/- 1
+        # normalize the data:
+        data = (data - np.min(data)) / (np.max(data) - np.min(data))
         data *= 32767  # spans +/- 32767
         data = data.astype(int)
 
+        timeout_old = self.timeout
+        self.timeout = 4000  # big waveforms need more time
+
+        if clear:
+            self.instrument.write(f'DATA:VOL:CLE')
         # send data
-        cmd_str = "SOUR:DATA:ARB1:DAC"
-        self.instrument.write('{} {},{}'.format(cmd_str,
-                                                arb_name,
-                                                ",".join(map(str, data))))
+        cmd_str = "SOUR1:DATA:ARB1:DAC"
+        try:
+            self.instrument.write('{} {},{}'.format(cmd_str,
+                                                    arb_name,
+                                                    ",".join(map(str, data))))
+        except VisaIOError:
+            print(f'timeout {self.timeout} trying 2x')
+            self.timeout = self.timeout * 2
+            self.instrument.write('{} {},{}'.format(cmd_str,
+                                                    arb_name,
+                                                    ",".join(map(str, data))))
+        self.timeout = timeout_old
+        return
+
+    def select_arbitrary_waveform(self, arb_name: str,
+                                  source: int = 1) -> None:
+        self.instrument.write(f'SOUR{source}:FUNC:ARB {arb_name}')
+        self.set_waveform_type('ARB', source)
+        return
+
+    def set_sample_rate(self, sample_rate: float, source: int = 1) -> None:
+        self.instrument.write(f'SOUR{source}:FUNC:ARB:SRAT {sample_rate}')
+        return
 
 
 if __name__ == "__main__":
