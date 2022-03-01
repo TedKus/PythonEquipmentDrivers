@@ -42,7 +42,7 @@ def mask_resources(configuration: dict, resource_mask: set) -> dict:
 
     Args:
         configuration (dict): resource configuration information for the
-            build_environment function.
+            connect_equipment function.
         resource_mask (set): a set of resources that are to be kept in the
             configuration information.
 
@@ -57,44 +57,44 @@ def mask_resources(configuration: dict, resource_mask: set) -> dict:
     return configuration
 
 
-class Environment:
+class EquipmentCollection:
     """
-    Environment
+    EquipmentCollection
 
-    Test environment Base-Class returned by build_environment
+    Test environment Base-Class returned by connect_equipment
 
-    Attributes of the Environment instance depend on the configuration passed
-    into the build_environment
+    Attributes of the EquipmentCollection instance depend on the configuration
+    passed into the connect_equipment
     """
 
     pass
 
 
 # Update expected/assumed format of json file
-def build_environment(configuration: Union[str, Path, dict],
-                      **kwargs) -> Environment:
+def connect_equipment(config: Union[str, Path, dict],
+                      **kwargs) -> EquipmentCollection:
     """
-    build_environment(configuration, **kwargs)
+    connect_equipment(config, **kwargs)
 
-    Returns in instance of an Environment object; an object containing multiple
-    equipment instances as instance attributes. This simplifies the overhead
-    needed to instantiate connections to an entire set of devices.
+    Returns in instance of an EquipmentCollection object; an object containing
+    multiple equipment instances as instance attributes. This simplifies the
+    overhead needed to instantiate connections to an entire set of devices.
 
     This can be useful when repeatedly connecting to the same set of devices,
-    or for ensuring different sets of equipment are instantiated as Environment
-    objects with the same attributes; allowing for easy reuse of the same test
-    scripts using differents setups.
+    or for ensuring different sets of equipment are instantiated as
+    EquipmentCollection objects with the same attributes; allowing for easy
+    reuse of the same test scripts using differents setups.
 
-    The information required to configure the returned Environment object is
-    provided using the 'configuration' arguement which is either a path to a
-    file or a dictionary containing the required information.
+    The information required to configure the returned EquipmentCollection
+    object is provided using the 'config' arguement which is either a
+    path to a file or a dictionary containing the required information.
 
     Args:
-        configuration (Union[str, Path, dict]): [description]
+        config (Union[str, Path, dict]): [description]
 
     Kwargs:
         object_mask (set, optional): A set of attribute names specified in the
-            configuration information to connect. If any of the specified
+            config information to connect. If any of the specified
             devices fail to connect an exception will be raised. Defaults
             behavior is to connect everything present.
         verbose (bool, optional): If True, instantiation, status, and error
@@ -104,8 +104,8 @@ def build_environment(configuration: Union[str, Path, dict],
             False.
 
     Returns:
-        Environment: An object containing the device instances specified in
-            'configuration' as attributes.
+        EquipmentCollection: An object containing the device instances
+            specified in 'config' as attributes.
 
     Examples:
 
@@ -181,7 +181,7 @@ def build_environment(configuration: Union[str, Path, dict],
     """
 
     # read/process configuration information
-    env_config = read_configuration(configuration)
+    env_config = read_configuration(config)
 
     object_mask = set(kwargs.get('object_mask', {}))
     if object_mask:
@@ -192,8 +192,8 @@ def build_environment(configuration: Union[str, Path, dict],
             raise errors.EnvironmentSetupError("Required Equipment Missing",
                                                missing)
 
-    # build Environment instance
-    env = Environment()
+    # build EquipmentCollection instance
+    env = EquipmentCollection()
     for name, meta_info in env_config.items():
 
         try:

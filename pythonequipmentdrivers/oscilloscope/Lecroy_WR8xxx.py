@@ -278,22 +278,20 @@ class Lecroy_WR8xxx(Scpi_Instrument):
             self.instrument.write('PARM CUST,STAT')
         return None
 
-    def disable_measure_statistics(self):
+    def disable_measure_statistics(self) -> None:
         self.instrument.write('PARM CUST,OFF')
-        return None
 
-    def reset_measure_statistics(self):
+    def reset_measure_statistics(self) -> None:
         """
         reset_measure_statistics()
 
         resets the accumlated measurements used to calculate statistics
         """
-        self.instrument.write("VBS 'app.ClearSweeps' ")
-        return None
 
-    def clear_all_measure(self):
+        self.instrument.write("VBS 'app.ClearSweeps' ")
+
+    def clear_all_measure(self) -> None:
         self.instrument.write('PACL')
-        return None
 
     def trigger_run(self) -> None:
         """
@@ -819,24 +817,62 @@ class Lecroy_WR8xxx(Scpi_Instrument):
     def set_channel_display(self, channel, mode):
         # mode = "true" or "false"
         q_str = f"""vbs 'app.acquisition.C{channel}.View = {mode} '"""
+    def set_channel_alias(self, channel: int, alias: str) -> None:
+        """
+        set_channel_alias(channel, name)
+
+        updates the alias string assigned to a specified channel, "channel",
+        with the value given in "alias".
+
+        Args:
+            channel (int): channel number to update label of.
+            alias (str): text to assign to the specified channel
+        """
+
+
+        q_str = f"""vbs 'app.acquisition.C{channel}.Alias = "{alias}" '"""
         self.instrument.write(q_str)
-        return None
 
-    def set_persistence_state(self, state):
-        if state:
-            self.instrument.write('PERSIST ON')
-        else:
-            self.instrument.write('PERSIST OFF')
-        return None
+    def get_channel_alias(self, channel: int) -> str:
+        """
+        get_channel_alias(channel)
 
-    def get_persistence_state(self):
+        Queries the channel alias of the channel specified by "channel".
+
+        Args:
+            channel (int): channel number to query label of.
+        Returns:
+            (str): alias to assigned to the specified channel
+        """
+
+        q_str = f"""vbs? 'return = app.acquisition.C{channel}.Alias'"""
+        response = self.instrument.query(q_str)
+
+        return response.strip().split()[1]
+
+    def set_channel_display(self, channel: int, mode: bool) -> None:
+        """
+        set_channel_display(channel, mode)
+
+        Sets the visablity of the specified channel.
+
+        Args:
+            channel (int): channel number to configure.
+            mode (bool): Whether or not the channel is visable on the screen
+        """
+        q_str = f"""vbs 'app.acquisition.C{channel}.View = {bool(mode)} '"""
+        self.instrument.write(q_str)
+
+    def set_persistence_state(self, state) -> None:
+        self.instrument.write(f'PERSIST {"ON" if state else "OFF"}')
+
+
+    def get_persistence_state(self) -> bool:
 
         response = self.instrument.query('PERSIST?')
         response = response.split()[1]
 
-        if response == 'ON':
-            return True
-        return False
+        return (response == 'ON')
 
     def set_persistence_time(self, duration: Union[float, str]) -> None:
         """
@@ -850,7 +886,7 @@ class Lecroy_WR8xxx(Scpi_Instrument):
                 oscilloscope capture display in seconds. Valid values are
                 positive numbers or "inf" to set the maximum exposure time
         """
-        valid_durs = (0.5, 1, 2, 5, 1, 20, 'inf')
+        valid_durs = (0.5, 1, 2, 5, 1, 20, 'infinite')
 
         if isinstance(duration, str):
             duration = duration.lower()
@@ -876,7 +912,7 @@ class Lecroy_WR8xxx(Scpi_Instrument):
 
         if response.isnumeric():
             return float(dur)
-        return 'inf'
+        return 'infinite'
 
     def set_comm_header(self, header: str) -> None:
         """
@@ -938,7 +974,3 @@ class Lecroy_WR8xxx(Scpi_Instrument):
         header = header.strip().lower()
 
         return header
-
-
-if __name__ == '__main__':
-    pass
