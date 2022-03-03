@@ -189,6 +189,38 @@ class Agilent_33250A(Scpi_Instrument):
     def trigger(self) -> None:
         self.instrument.write('TRIG')
 
+    def get_trigger_count(self):
+        response = self.instrument.query(f'TRIG:COUN?')
+        return int(float(response))
+
+    def set_trigger_delay(self, delay):
+        str_options = ['MIN', 'MAX']
+        if isinstance(delay, (float, int)):
+            self.instrument.write(f'TRIG:DEL {delay}')
+        elif isinstance(delay, str) and (delay.upper() in str_options):
+            self.instrument.write(f'TRIG:DEL {delay.upper()}')
+        else:
+            raise ValueError('invalid entry for delay')
+        return None
+
+    def get_trigger_delay(self):
+        response = self.instrument.query(f'TRIG:DEL?')
+        return float(response)
+
+    def set_trigger_source(self, trig_source):
+        trig_opts = ['IMM', 'IMMEDIATE', 'EXT', 'EXTERNAL',
+                     'TIM', 'TIMER', 'BUS']
+        trig_source = trig_source.upper()
+        if trig_source in trig_opts:
+            self.instrument.write(f'TRIG:SOUR {trig_source}')
+        else:
+            raise ValueError(f'Invalid arg for trig_source ({trig_opts})')
+        return None
+
+    def get_trigger_source(self):
+        response = self.instrument.query(f'TRIG:SOUR?')
+        return response.strip().lower()
+
     def store_arbitrary_waveform(self, data: Sequence,
                                  arb_name: str='VOLATILE',
                                  clear: bool = True) -> None:
