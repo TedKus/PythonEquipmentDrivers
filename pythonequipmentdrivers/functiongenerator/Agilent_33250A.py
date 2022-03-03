@@ -1,4 +1,4 @@
-from pythonequipmentdrivers import Scpi_Instrument
+from pythonequipmentdrivers import Scpi_Instrument, VisaIOError
 import numpy as np
 
 
@@ -187,3 +187,45 @@ class Agilent_33250A(Scpi_Instrument):
 
     def trigger(self) -> None:
         self.instrument.write('TRIG')
+
+    def store_arbitrary_waveform(self, data: Sequence,
+                                 arb_name: str='VOLATILE',
+                                 clear: bool = True) -> None:
+
+        if not (8 < len(data) < 65536):
+            raise ValueError('data must be between 8 and 65536 samples')
+
+        data = np.array(data)
+        # normalize the data:
+        data = (data - np.min(data)) / (np.max(data) - np.min(data))
+        data *= 32767  # spans +/- 32767
+        data = data.astype(int)
+
+        timeout_old = self.timeout
+        self.timeout = 4000  # big waveforms need more time
+
+        if clear:
+            self.instrument.write(f'DATA:DEL {arb_name}')
+        # send data
+        cmd_str = "DATA:DAC"
+        try:
+            self.instrument.write('{} {},{}'.format(cmd_str,
+                                                    arb_name,
+                                                    ",".join(map(str, data))))
+        except VisaIOError:
+            print(f'timeout {self.timeout} trying 2x')
+            self.timeout = self.timeout * 2
+            self.instrument.write('{} {},{}'.format(cmd_str,
+                                                    arb_name,
+                                                    ",".join(map(str, data))))
+        self.timeout = timeout_old
+        return
+
+    def select_arbitrary_waveform(self, arb_name: str='VOLATILE') -> None:
+        self.instrument.write(f'FUNC:USER {arb_name}')
+        self.set_waveform_type('USER')
+        return
+
+    def set_sample_rate(self, sample_rate: float) -> None:
+        self.instrument.write(f'APPLY:USER {sample_rate}')
+        return
