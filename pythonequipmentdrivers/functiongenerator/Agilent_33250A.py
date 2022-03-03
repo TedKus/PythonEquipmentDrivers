@@ -199,7 +199,7 @@ class Agilent_33250A(Scpi_Instrument):
         data = np.array(data)
         # normalize the data:
         data = (data - np.min(data)) / (np.max(data) - np.min(data))
-        data *= 32767  # spans +/- 32767
+        data *= 2047  # spans +/- 2047 in the 33250
         data = data.astype(int)
 
         timeout_old = self.timeout
