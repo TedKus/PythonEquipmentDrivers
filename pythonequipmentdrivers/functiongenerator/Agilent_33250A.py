@@ -1,3 +1,4 @@
+from typing import Sequence
 from pythonequipmentdrivers import Scpi_Instrument, VisaIOError
 import numpy as np
 
