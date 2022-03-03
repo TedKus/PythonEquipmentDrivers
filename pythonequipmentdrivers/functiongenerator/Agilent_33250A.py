@@ -205,21 +205,24 @@ class Agilent_33250A(Scpi_Instrument):
         timeout_old = self.timeout
         self.timeout = 4000  # big waveforms need more time
 
-        if clear:
-            self.instrument.write(f'DATA:DEL {arb_name}')
-        # send data
         cmd_str = "DATA:DAC"
         try:
             self.instrument.write('{} {},{}'.format(cmd_str,
-                                                    arb_name,
+                                                    'VOLATILE',
                                                     ",".join(map(str, data))))
         except VisaIOError:
             print(f'timeout {self.timeout} trying 2x')
             self.timeout = self.timeout * 2
             self.instrument.write('{} {},{}'.format(cmd_str,
-                                                    arb_name,
+                                                    'VOLATILE',
                                                     ",".join(map(str, data))))
         self.timeout = timeout_old
+
+        if clear:
+            self.instrument.write(f'DATA:DEL {arb_name}')
+        # send data
+        if arb_name != 'VOLATILE':
+            self.instrument.write(f'DATA:COPY {arb_name}')
         return
 
     def select_arbitrary_waveform(self, arb_name: str='VOLATILE') -> None:
