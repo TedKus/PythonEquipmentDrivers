@@ -628,6 +628,47 @@ class Chroma_63600(Scpi_Instrument):
     #     self.instrument.write(f'CONF:SYNC:MODE {state}')
     #     return None
 
+    def set_sync_type(self, state):
+        """
+        Set the specified mainframe to master or slave for sync. in parallel
+        run.
+        Each mainframe has up to 5 channels (1-5), addressing a second
+        mainframe is acomplished by setting channels 6-10, or 11-15 or 16-20
+        for mainframes 1-4. One channel from each mainfram should be selected
+        and this command sent as appropriate for THAT mainframe.
+        When finished, select the master channel on the master mainframe and
+        use set_current or on/off commands to control the group.
+
+        Args:
+            state: 0, 1, 2 for None(0), Master(1), Slave(2)
+        """
+
+        self.instrument.write(f'SYNC:TYPE {state}')
+
+    def get_sync_type(self) -> int:
+        """
+        get_sync_type()
+
+        Returns the parallel run configuration of the respective mainframe for
+        the active channel (int).
+
+        Valid return values are:
+                    0: None
+                    1: Master
+                    2: Slave
+        """
+        resp = self.instrument.query('SYNC:TYPE?')
+        resp = resp.strip()
+
+        if resp == "NONE":
+            return 0
+        if resp == "MASTER":
+            return 1
+        elif resp == "SLAVE":
+            return 2
+        else:
+            raise IOError(f"Unknown response: {resp}")
+
     def set_voltage(self, voltage, level=0):
         """
         set_voltage(voltage, level=0)
