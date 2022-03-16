@@ -245,6 +245,7 @@ class Agilent_33250A(Scpi_Instrument):
         except VisaIOError:
             print(f'timeout {self.timeout} trying 2x')
             self.timeout = self.timeout * 2
+            self.cls()
             self.instrument.write('{} {},{}'.format(cmd_str,
                                                     'VOLATILE',
                                                     ",".join(map(str, data))))
