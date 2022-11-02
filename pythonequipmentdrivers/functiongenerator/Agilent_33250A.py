@@ -2,6 +2,7 @@ from typing import Sequence
 from pythonequipmentdrivers import VisaResource, VisaIOError
 import numpy as np
 
+
 class Agilent_33250A(VisaResource):
     """
     Agilent_33250A(address)
@@ -74,19 +75,6 @@ class Agilent_33250A(VisaResource):
 
     def get_voltage_units(self) -> str:
         return self.query_resource('VOLT:UNIT?')
-
-    def set_voltage_units(self, units: str = 'VPP') -> None:
-        """
-        Valid options are VPP, VRMS, DBM
-        """
-
-        valid_str = ('VPP', 'VRMS', 'DBM')
-
-        if isinstance(units, str) and (units.upper() in valid_str):
-            self.write_resource(f'VOLT:UNIT {units.upper()}')
-
-    def get_voltage_units(self) -> str:
-        return self.instrument.query('VOLT:UNIT?')
 
     def set_voltage_units(self, units: str = 'VPP') -> None:
         """
@@ -199,7 +187,7 @@ class Agilent_33250A(VisaResource):
         self.write_resource('TRIG')
 
     def get_trigger_count(self):
-        response = self.query_resource(f'TRIG:COUN?')
+        response = self.query_resource('TRIG:COUN?')
         return int(float(response))
 
     def set_trigger_delay(self, delay):
@@ -213,7 +201,7 @@ class Agilent_33250A(VisaResource):
         return None
 
     def get_trigger_delay(self):
-        response = self.query_resource(f'TRIG:DEL?')
+        response = self.query_resource('TRIG:DEL?')
         return float(response)
 
     def set_trigger_source(self, trig_source):
@@ -227,11 +215,11 @@ class Agilent_33250A(VisaResource):
         return None
 
     def get_trigger_source(self):
-        response = self.query_resource(f'TRIG:SOUR?')
+        response = self.query_resource('TRIG:SOUR?')
         return response.strip().lower()
 
     def store_arbitrary_waveform(self, data: Sequence,
-                                 arb_name: str='VOLATILE',
+                                 arb_name: str = 'VOLATILE',
                                  clear: bool = True) -> None:
 
         if not (8 < len(data) < 65536):
@@ -249,15 +237,15 @@ class Agilent_33250A(VisaResource):
         cmd_str = "DATA:DAC"
         try:
             self.write_resource('{} {},{}'.format(cmd_str,
-                                                    'VOLATILE',
-                                                    ",".join(map(str, data))))
+                                                  'VOLATILE',
+                                                  ",".join(map(str, data))))
         except VisaIOError:
             print(f'timeout {self.timeout} trying 2x')
             self.timeout = self.timeout * 2
             self.cls()
             self.write_resource('{} {},{}'.format(cmd_str,
-                                                    'VOLATILE',
-                                                    ",".join(map(str, data))))
+                                                  'VOLATILE',
+                                                  ",".join(map(str, data))))
         self.timeout = timeout_old
 
         if clear:
@@ -267,85 +255,7 @@ class Agilent_33250A(VisaResource):
             self.write_resource(f'DATA:COPY {arb_name}')
         return
 
-    def select_arbitrary_waveform(self, arb_name: str='VOLATILE') -> None:
-        self.write_resource(f'FUNC:USER {arb_name}')
-        self.set_waveform_type('USER')
-        return
-
-    def set_sample_rate(self, sample_rate: float) -> None:
-        self.write_resource(f'APPLY:USER {sample_rate}')
-        return
-
-    def get_trigger_count(self):
-        response = self.query_resource(f'TRIG:COUN?')
-        return int(float(response))
-
-    def set_trigger_delay(self, delay):
-        str_options = ['MIN', 'MAX']
-        if isinstance(delay, (float, int)):
-            self.write_resource(f'TRIG:DEL {delay}')
-        elif isinstance(delay, str) and (delay.upper() in str_options):
-            self.write_resource(f'TRIG:DEL {delay.upper()}')
-        else:
-            raise ValueError('invalid entry for delay')
-        return None
-
-    def get_trigger_delay(self):
-        response = self.query_resource(f'TRIG:DEL?')
-        return float(response)
-
-    def set_trigger_source(self, trig_source):
-        trig_opts = ['IMM', 'IMMEDIATE', 'EXT', 'EXTERNAL',
-                     'TIM', 'TIMER', 'BUS']
-        trig_source = trig_source.upper()
-        if trig_source in trig_opts:
-            self.write_resource(f'TRIG:SOUR {trig_source}')
-        else:
-            raise ValueError(f'Invalid arg for trig_source ({trig_opts})')
-        return None
-
-    def get_trigger_source(self):
-        response = self.query_resource(f'TRIG:SOUR?')
-        return response.strip().lower()
-
-    def store_arbitrary_waveform(self, data: Sequence,
-                                 arb_name: str='VOLATILE',
-                                 clear: bool = True) -> None:
-
-        if not (8 < len(data) < 65536):
-            raise ValueError('data must be between 8 and 65536 samples')
-
-        data = np.array(data)
-        # normalize the data:
-        data = (data - np.min(data)) / (np.max(data) - np.min(data))
-        data *= 2047  # spans +/- 2047 in the 33250
-        data = data.astype(int)
-
-        timeout_old = self.timeout
-        self.timeout = 4000  # big waveforms need more time
-
-        cmd_str = "DATA:DAC"
-        try:
-            self.write_resource('{} {},{}'.format(cmd_str,
-                                                    'VOLATILE',
-                                                    ",".join(map(str, data))))
-        except VisaIOError:
-            print(f'timeout {self.timeout} trying 2x')
-            self.timeout = self.timeout * 2
-            self.cls()
-            self.write_resource('{} {},{}'.format(cmd_str,
-                                                    'VOLATILE',
-                                                    ",".join(map(str, data))))
-        self.timeout = timeout_old
-
-        if clear:
-            self.write_resource(f'DATA:DEL {arb_name}')
-        # send data
-        if arb_name != 'VOLATILE':
-            self.write_resource(f'DATA:COPY {arb_name}')
-        return
-
-    def select_arbitrary_waveform(self, arb_name: str='VOLATILE') -> None:
+    def select_arbitrary_waveform(self, arb_name: str = 'VOLATILE') -> None:
         self.write_resource(f'FUNC:USER {arb_name}')
         self.set_waveform_type('USER')
         return
