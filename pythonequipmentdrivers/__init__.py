@@ -1,7 +1,7 @@
-from .core import (Scpi_Instrument, get_devices_addresses, identify_devices,
-                   VisaIOError)
+from .core import (VisaResource, GpibInterface,
+                   find_visa_resources, identify_visa_resources)
 
-from .equipment_collections import connect_equipment, EquipmentCollection
+from .resource_collections import connect_resources, ResourceCollection
 
 from . import utility
 from . import errors
@@ -16,12 +16,13 @@ from . import oscilloscope
 from . import networkanalyzer
 
 from . import functiongenerator
+from . import temperaturecontroller
 
 
-__all__ = ['Scpi_Instrument', 'get_devices_addresses', 'identify_devices',
-           'VisaIOError',
+__all__ = ['VisaResource', 'GpibInterface', 'find_visa_resources',
+           'identify_visa_resources',
 
-           'connect_equipment', 'EquipmentCollection',
+           'connect_resources', 'ResourceCollection',
 
            'utility', 'errors',
 
@@ -35,4 +36,5 @@ __all__ = ['Scpi_Instrument', 'get_devices_addresses', 'identify_devices',
            'networkanalyzer',
 
            'functiongenerator',
+           'temperaturecontroller'
            ]
