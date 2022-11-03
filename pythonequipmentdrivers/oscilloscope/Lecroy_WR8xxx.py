@@ -1016,6 +1016,21 @@ class Lecroy_WR8xxx(VisaResource):
         q_str = f"""vbs 'app.acquisition.C{channel}.View = {bool(mode)} '"""
         self.write_resource(q_str)
 
+    def get_channel_display(self, channel: int) -> None:
+        """
+        set_channel_display(channel)
+
+        Gets the visablity of the specified channel.
+
+        Args:
+            channel (int): channel number to configure.
+        Returns:
+            mode (bool): Whether or not the channel is visable on the screen
+        """
+        q_str = f"""vbs? 'return = app.acquisition.C{channel}.View'"""
+        response = self.query_resource(q_str)
+        return ('-1' in response)
+
     def set_persistence_state(self, state: bool) -> None:
         self.write_resource(f'PERSIST {"ON" if state else "OFF"}')
 
