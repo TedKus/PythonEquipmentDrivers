@@ -1,5 +1,5 @@
 from typing import Sequence
-from pythonequipmentdrivers import VisaResource, VisaIOError
+from pythonequipmentdrivers import VisaResource
 import numpy as np
 
 
@@ -239,7 +239,7 @@ class Agilent_33250A(VisaResource):
             self.write_resource('{} {},{}'.format(cmd_str,
                                                   'VOLATILE',
                                                   ",".join(map(str, data))))
-        except VisaIOError:
+        except IOError:
             print(f'timeout {self.timeout} trying 2x')
             self.timeout = self.timeout * 2
             self.cls()
