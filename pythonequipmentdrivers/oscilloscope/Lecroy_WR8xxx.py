@@ -233,6 +233,65 @@ class Lecroy_WR8xxx(VisaResource):
         val = response.split()[1]
         return float(val)
 
+    def set_horizontal_offset(self, offset: float = 0.0) -> None:
+        """
+        set_horizontal_offset(offset)
+
+        sets the offset of horizontal divisons (for all channels) to the
+        specified value in seconds.
+
+        Args:
+            offset (float): time offset of horizonatal triger position
+                on the display in seconds. Default 0.0.
+        """
+        q_str = ("""vbs 'app.Acquisition.Horizontal.horOffset""" +
+                 f""" = "{offset}" ' """)
+        self.write_resource(q_str)
+
+    def get_horizontal_offset(self) -> float:
+        """
+        get_horizontal_offset()
+
+        Retrieves the horizontal offset used to accquire waveform data.
+
+        Returns:
+            float: horizontal offset in seconds per division.
+        """
+        q_str = ("""vbs? ' return = app.Acquisition.Horizontal.HorOffset' """)
+        response = self.query_resource(q_str)
+        val = response.split()[1]
+        return float(val)
+
+    def set_horizontal_offset_division(self, division: float = 0.0) -> None:
+        """
+        set_horizontal_offset_division(division)
+
+        sets the offset of horizontal divisons (for all channels) to the
+        specified value in divisiona.
+
+        Args:
+            division (float): division offset of horizonatal triger position
+                on the display in divisions. Default 0.0.
+        """
+        q_str = ("""vbs 'app.Acquisition.Horizontal.horOffsetOrigin""" +
+                 f""" = "{division}" ' """)
+        self.write_resource(q_str)
+
+    def get_horizontal_offset_division(self) -> float:
+        """
+        get_horizontal_offset_division()
+
+        Retrieves the horizontal offset used to accquire waveform data.
+
+        Returns:
+            float: horizontal offset in divisions.
+        """
+        q_str = ("""vbs? ' return = app.Acquisition.""" +
+                 """Horizontal.HorOffsetOrigin' """)
+        response = self.query_resource(q_str)
+        val = response.split()[1]
+        return float(val)
+
     def set_memory_size(self, size: int) -> None:
         """
         set_memory_size()
@@ -483,7 +542,7 @@ class Lecroy_WR8xxx(VisaResource):
         """
         get_trigger_mode()
 
-        Gets the mode of the trigger used for data acquisition.
+        Gets the mode of the trigger used for data Acquisition.
 
         Returns:
             str: trigger mode.
@@ -643,7 +702,7 @@ class Lecroy_WR8xxx(VisaResource):
         Automatically sets trigger level to signal mean.
         """
 
-        self.write_resource("""vbs 'app.acquisition.Trigger.FindLevel'""")
+        self.write_resource("""vbs 'app.Acquisition.Trigger.FindLevel'""")
 
     def set_trigger_slope(self, slope: str, **kwargs) -> None:
         """
@@ -905,7 +964,7 @@ class Lecroy_WR8xxx(VisaResource):
             label (str): text label to assign to the specified
         """
 
-        q_str = f"""vbs 'app.acquisition.C{channel}.LabelsText = "{label}" '"""
+        q_str = f"""vbs 'app.Acquisition.C{channel}.LabelsText = "{label}" '"""
         self.write_resource(q_str)
 
     def get_channel_label(self, channel: int) -> str:
@@ -920,7 +979,66 @@ class Lecroy_WR8xxx(VisaResource):
             (str): text label to assigned to the specified channel
         """
 
-        q_str = f"""vbs? 'return = app.acquisition.C{channel}.LabelsText'"""
+        q_str = f"""vbs? 'return = app.Acquisition.C{channel}.LabelsText'"""
+
+        response = self.query_resource(q_str)
+
+        return ' '.join(response.split()[1:])
+
+    def set_digital_label_source(self, group: int = 1,
+                                 labels: str = 'CUSTOM') -> None:
+        """
+        set_digital_label_source(group, labels)
+
+        updates the text label source on a digital group with the
+        value given in "labels".
+
+        Args:
+            group (int): digital group number to update label of. 1-4.
+            label (str): DATA, ADDRESS, CUSTOM
+        """
+        labels = labels.upper()
+        if labels not in {'DATA', 'ADDRESS', 'CUSTOM'}:
+            raise ValueError('Invalid option for "labels" arg')
+
+        q_str = (f"""vbs 'app.LogicAnalyzer.Digital{group}.Labels""" +
+                 f""" = "{labels}" '""")
+        self.write_resource(q_str)
+
+    def set_digital_label(self, channel: int, label: str,
+                          group: int = 1) -> None:
+        """
+        set_digital_label(channel, label, group)
+
+        updates the text label on a channel specified by "channel" with the
+        value given in "label", in digital group given in "group"
+
+        Args:
+            channel (int): channel number to update label of. 0-16.
+            group (int): digital group number to update label of. 1-4.
+            label (str): text label to assign to the specified
+        """
+
+        q_str = (f"""vbs 'app.LogicAnalyzer.Digital{group}.CustomBitName""" +
+                 f"""{channel} = "{label}" '""")
+        self.write_resource(q_str)
+
+    def get_digital_label(self, channel: int, group: int = 1) -> str:
+        """
+        get_digital_label(channel, group)
+
+        Queries the text label of the digital channel specified by "channel"
+        and "group"
+
+        Args:
+            channel (int): channel number to query label of.
+            group (int): digital group number to query label of.
+        Returns:
+            (str): text label to assigned to the specified channel
+        """
+
+        q_str = (f"""vbs? 'return = app.LogicAnalyzer.Digital{group}.""" +
+                 f"""CustomBitName{channel}'""")
 
         response = self.query_resource(q_str)
 
@@ -938,7 +1056,7 @@ class Lecroy_WR8xxx(VisaResource):
             alias (str): text to assign to the specified channel
         """
 
-        q_str = f"""vbs 'app.acquisition.C{channel}.Alias = "{alias}" '"""
+        q_str = f"""vbs 'app.Acquisition.C{channel}.Alias = "{alias}" '"""
         self.write_resource(q_str)
 
     def set_channel_label_position(self, channel: int,
@@ -951,7 +1069,7 @@ class Lecroy_WR8xxx(VisaResource):
             place the label. Units are in seconds. Defaults to 0.
         """
 
-        q_str = (f"""vbs 'app.acquisition.C{channel}.LabelsPosition = """ +
+        q_str = (f"""vbs 'app.Acquisition.C{channel}.LabelsPosition = """ +
                  f""""{position}" '""")
         self.write_resource(q_str)
 
@@ -968,7 +1086,7 @@ class Lecroy_WR8xxx(VisaResource):
             Defaults to True 'ON'
         """
 
-        q_str = (f"""vbs 'app.acquisition.C{channel}.LabelsPosition = """ +
+        q_str = (f"""vbs 'app.Acquisition.C{channel}.LabelsPosition = """ +
                  f""""{'ON' if view else 'OFF'}" '""")
         self.write_resource(q_str)
 
@@ -983,7 +1101,7 @@ class Lecroy_WR8xxx(VisaResource):
             channel (int): channel number to update scale of.
         """
 
-        q_str = (f"""vbs 'app.acquisition.C{channel}.FindScale'""")
+        q_str = (f"""vbs 'app.Acquisition.C{channel}.FindScale'""")
         self.write_resource(q_str)
 
     def get_channel_alias(self, channel: int) -> str:
@@ -998,7 +1116,7 @@ class Lecroy_WR8xxx(VisaResource):
             (str): alias to assigned to the specified channel
         """
 
-        q_str = f"""vbs? 'return = app.acquisition.C{channel}.Alias'"""
+        q_str = f"""vbs? 'return = app.Acquisition.C{channel}.Alias'"""
         response = self.query_resource(q_str)
 
         return response.split()[1]
@@ -1013,7 +1131,7 @@ class Lecroy_WR8xxx(VisaResource):
             channel (int): channel number to configure.
             mode (bool): Whether or not the channel is visable on the screen
         """
-        q_str = f"""vbs 'app.acquisition.C{channel}.View = {bool(mode)} '"""
+        q_str = f"""vbs 'app.Acquisition.C{channel}.View = {bool(mode)} '"""
         self.write_resource(q_str)
 
     def get_channel_display(self, channel: int) -> None:
@@ -1027,7 +1145,7 @@ class Lecroy_WR8xxx(VisaResource):
         Returns:
             mode (bool): Whether or not the channel is visable on the screen
         """
-        q_str = f"""vbs? 'return = app.acquisition.C{channel}.View'"""
+        q_str = f"""vbs? 'return = app.Acquisition.C{channel}.View'"""
         response = self.query_resource(q_str)
         return ('-1' in response)
 
