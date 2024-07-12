@@ -2,7 +2,8 @@ from typing import Iterable, List, Optional, Tuple
 
 import pyvisa
 
-from pythonequipmentdrivers.errors import ResourceConnectionError
+from pythonequipmentdrivers.errors import (ResourceConnectionError,
+                                           VisaIOErrorWithRetry)
 
 # Globals
 rm = pyvisa.ResourceManager()
@@ -121,8 +122,6 @@ class VisaResource:
 
         try:
             self._resource = rm.open_resource(self.address, **default_settings)
-
-            self.idn = self.query_resource("*IDN?")
         except pyvisa.Error as error:
             raise ResourceConnectionError(
                 f"Could not connect to resource at: {address}", error)
@@ -132,7 +131,7 @@ class VisaResource:
             self._resource.clear()  # cannot use self.clear must use pyvisa
             try:
                 self.idn = self.query_resource("*IDN?")
-            except (pyvisa.Error) as error:
+            except pyvisa.Error as error:
                 raise ResourceConnectionError(
                     f"Could not connect to resource at: {address}", error)
 
@@ -254,40 +253,46 @@ class VisaResource:
     def __str__(self) -> str:
         return f"Resource ID: {self.idn}\nAddress: {self.address}"
 
-    def write_resource(self, message: str, **kwargs) -> None:
+    def write_resource(self, message: str, retries: int = 0, **kwargs) -> None:
         """
-        write_resource(message, **kwargs)
+        write_resource(message, retries=0, **kwargs)
 
         Writes data to the connected resource.
 
         Args:
             message (str): data to write to the connected resource, string of
                 ascii characters
+            retries (int, optional): number of retry attempts on failure.
+                Defaults to 0.
         """
-
         try:
             self._resource.write(message=message, **kwargs)
-        except pyvisa.VisaIOError as error:
-            raise IOError("Error communicating with the resource\n", error)
+        except pyvisa.VisaIOError:
+            raise VisaIOErrorWithRetry(
+                self, self._resource.write, retries, message, **kwargs
+            ).handle()
 
-    def write_resource_raw(self, message: bytes, **kwargs) -> None:
+    def write_resource_raw(self, message: bytes, retries: int = 0, **kwargs) -> None:
         """
-        write_resource_raw(message, **kwargs)
+        write_resource_raw(message, retries=0, **kwargs)
 
         Writes data to the connected resource.
 
         Args:
             message (bytes): data to write to the connected resource
+            retries (int, optional): number of retry attempts on failure.
+                Defaults to 0.
         """
-
         try:
             self._resource.write_raw(message=message, **kwargs)
-        except pyvisa.VisaIOError as error:
-            raise IOError("Error communicating with the resource\n", error)
+        except pyvisa.VisaIOError:
+            raise VisaIOErrorWithRetry(
+                self, self._resource.write_raw, retries, message, **kwargs
+            ).handle()
 
-    def query_resource(self, message: str, **kwargs) -> str:
+    def query_resource(self, message: str, retries: int = 0, **kwargs) -> str:
         """
-        query_resource(query, **kwargs)
+        query_resource(query, retries=0, **kwargs)
 
         Writes data to the connected resource before reading data back from the
         resource. The duration of the delay between the write and read
@@ -296,75 +301,90 @@ class VisaResource:
 
         Args:
             message (str): data to write to the connected resource before
-                issuing a read, string of ascii characters
+                issueing a read, string of ascii characters
+            retries (int, optional): number of retry attempts on failure.
+                Defaults to 0.
         Returns:
-            str: data received from a connected resource, as string of
+            str: data recieved from a connected resource, as string of
                 ascii characters
         """
-
         try:
             response: str = self._resource.query(message=message, **kwargs)
             return response.strip()
+        except pyvisa.VisaIOError:
+            return VisaIOErrorWithRetry(
+                self, self._resource.query, retries, message, **kwargs
+            ).handle()
 
-        except pyvisa.VisaIOError as error:
-            raise IOError("Error communicating with the resource\n", error)
-
-    def read_resource(self, **kwargs) -> str:
+    def read_resource(self, retries: int = 0, **kwargs) -> str:
         """
-        read_resource(**kwargs)
+        read_resource(retries=0, **kwargs)
 
         Reads data back from the connected resource.
 
+        Args:
+            retries (int, optional): number of retry attempts on failure.
+                Defaults to 0.
+
         Returns:
-            str: data received from a connected resource, as string of
+            str: data recieved from a connected resource, as string of
                 ascii characters
         """
-
         try:
             response: str = self._resource.read(**kwargs)
             return response.strip()
+        except pyvisa.VisaIOError:
+            return VisaIOErrorWithRetry(
+                self, self._resource.read, retries, **kwargs
+            ).handle()
 
-        except pyvisa.VisaIOError as error:
-            raise IOError("Error communicating with the resource\n", error)
-
-    def read_resource_raw(self, **kwargs) -> bytes:
+    def read_resource_raw(self, retries: int = 0, **kwargs) -> bytes:
         """
-        read_resource_raw(**kwargs)
+        read_resource_raw(retries=0, **kwargs)
 
         Reads data back from the connected resource in its unmodified string
-        form (no termination characters skipped) and returns it in its received
+        form (no termination characters skipped) and returns it in its recieved
         raw byte format with no decoding. This can be useful for
         responses which do not use a simple ASCII or UTF-8 encoding.
 
-        Returns:
-            bytes: data received from a connected resource
-        """
+        Args:
+            retries (int, optional): number of retry attempts on failure.
+                Defaults to 0.
 
+        Returns:
+            bytes: data recieved from a connected resource
+        """
         try:
             response = self._resource.read_raw(**kwargs)
             return response
+        except pyvisa.VisaIOError:
+            return VisaIOErrorWithRetry(
+                self, self._resource.read_raw, retries, **kwargs
+            ).handle()
 
-        except pyvisa.VisaIOError as error:
-            raise IOError("Error communicating with the resource\n", error)
-
-    def read_resource_bytes(self, n: int, **kwargs) -> bytes:
+    def read_resource_bytes(self, n: int, retries: int = 0, **kwargs) -> bytes:
         """
-        read_resource_bytes(**kwargs)
+        read_resource_bytes(n, retries=0, **kwargs)
 
         Reads data back the specified number of bytes from the connected
         resource and returns it. This can be useful for responses which do not
         use a simple ASCII or UTF-8 encoding.
 
-        Returns:
-            bytes: data received from a connected resource
-        """
+        Args:
+            n (int): number of bytes to read
+            retries (int, optional): number of retry attempts on failure.
+                Defaults to 0.
 
+        Returns:
+            bytes: data recieved from a connected resource
+        """
         try:
             response = self._resource.read_bytes(count=n, **kwargs)
             return response
-
-        except pyvisa.VisaIOError as error:
-            raise IOError("Error communicating with the resource\n", error)
+        except pyvisa.VisaIOError:
+            return VisaIOErrorWithRetry(
+                self, self._resource.read_bytes, retries, n, **kwargs
+            ).handle()
 
 
 class GpibInterface:
