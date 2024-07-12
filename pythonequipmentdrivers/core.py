@@ -28,7 +28,7 @@ def identify_visa_resources(
     identify_connections(resources=None, verbose=False)
 
     Attempts to connect to and query the specified Visa resource connections
-    with an IDN query, which is a str identifing the resouce. If no resources
+    with an IDN query, which is a str identifying the resource. If no resources
     are specified the function will attempt to find connected Visa resources to
     query. A list of resource (address, response) tuples is returned for those
     resources that respond to the query. The IDN query is a IEEE 488.2 Common
@@ -39,7 +39,7 @@ def identify_visa_resources(
             (str) to identify, if None the find_visa_resources function will be
             internally called to get a list of Visa resources. Defaults to None
         verbose (bool, optional): if True resource addresses and idn strings
-            are printed to screen as their query responses are recieved and an
+            are printed to screen as their query responses are received and an
             error message is printed for resources which could not be reached
             or didn't return a response. Defaults to False.
     Kwargs:
@@ -75,7 +75,7 @@ def identify_visa_resources(
         except IOError:
             resource_id = "No response"
         except Exception:
-            resource_id = f"Failed to instantiate resouce at: {addr}"
+            resource_id = f"Failed to instantiate resource at: {addr}"
         else:
             visa_resources.append((addr, resource_id))
             del resource
@@ -90,7 +90,7 @@ class VisaResource:
     """
     VisaResource
 
-    Base class used to institate a Visa resource connection. The connection
+    Base class used to instantiate a Visa resource connection. The connection
     can be used to read/write data to the resource, including sending
     commands and querying information from the resource.
 
@@ -203,15 +203,16 @@ class VisaResource:
         """
         set_local()
 
-        Set the instument to local mode
+        Set the instrument to local mode
 
         Attempts to send the go to local command if the device has a ren
         function. Resource subclasses can customize this to handle specific
         cases i.e. serial resources
         """
         try:
-            # generic set local method for most GPIB, USB, TCIP
-            self._resource.control_ren(pyvisa.constants.RENLineOperation.address_gtl)
+            # generic set local method for most GPIB, USB, TCPIP
+            self._resource.control_ren(
+                pyvisa.constants.RENLineOperation.address_gtl)
         except (AttributeError, pyvisa.Error):
             # not a device that has control_ren method
             pass
@@ -295,9 +296,9 @@ class VisaResource:
 
         Args:
             message (str): data to write to the connected resource before
-                issueing a read, string of ascii characters
+                issuing a read, string of ascii characters
         Returns:
-            str: data recieved from a connected resource, as string of
+            str: data received from a connected resource, as string of
                 ascii characters
         """
 
@@ -315,7 +316,7 @@ class VisaResource:
         Reads data back from the connected resource.
 
         Returns:
-            str: data recieved from a connected resource, as string of
+            str: data received from a connected resource, as string of
                 ascii characters
         """
 
@@ -331,12 +332,12 @@ class VisaResource:
         read_resource_raw(**kwargs)
 
         Reads data back from the connected resource in its unmodified string
-        form (no termination characters skipped) and returns it in its recieved
+        form (no termination characters skipped) and returns it in its received
         raw byte format with no decoding. This can be useful for
         responses which do not use a simple ASCII or UTF-8 encoding.
 
         Returns:
-            bytes: data recieved from a connected resource
+            bytes: data received from a connected resource
         """
 
         try:
@@ -355,7 +356,7 @@ class VisaResource:
         use a simple ASCII or UTF-8 encoding.
 
         Returns:
-            bytes: data recieved from a connected resource
+            bytes: data received from a connected resource
         """
 
         try:
@@ -373,7 +374,7 @@ class GpibInterface:
     Class for instantiation of the GPIB interface device (typically plugs into
     the computer's USB port). Since GPIB is a bus based interface layer,
     all instruments that utilize the bus can be accessed with group commands,
-    if supported, to perform syncronized tasks.
+    if supported, to perform synchronized tasks.
     """
 
     def __init__(self, address: str, **kwargs) -> None:
@@ -394,7 +395,7 @@ class GpibInterface:
 
     def group_execute_trigger(self, *trigger_devices):
         """
-        Sends the group execture trigger (GET) command to the devices specified
+        Sends the group execute trigger (GET) command to the devices specified
 
         *trigger_devices: Device instances to trigger
         """
