@@ -510,7 +510,8 @@ class HP_34401A(VisaResource):
                 )
 
         for cmd_str in cmds:
-            if kwargs.get("verbose", False):
+            # can't send non pyvisa kwargs to resource!
+            if kwargs.pop('verbose', False):  # can't send non pyvisa kwargs
                 print(cmd_str)
             self.write_resource(cmd_str, **kwargs)
 

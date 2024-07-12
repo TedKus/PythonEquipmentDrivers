@@ -125,8 +125,16 @@ class VisaResource:
             self.idn = self.query_resource("*IDN?")
         except pyvisa.Error as error:
             raise ResourceConnectionError(
-                f"Could not connect to resource at: {address}", error
-            )
+                f"Could not connect to resource at: {address}", error)
+        try:
+            self.idn = self.query_resource("*IDN?")
+        except IOError:
+            self._resource.clear()  # cannot use self.clear must use pyvisa
+            try:
+                self.idn = self.query_resource("*IDN?")
+            except (pyvisa.Error) as error:
+                raise ResourceConnectionError(
+                    f"Could not connect to resource at: {address}", error)
 
         if clear:
             self.clear()
