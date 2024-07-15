@@ -1,4 +1,5 @@
 from ..core import VisaResource
+from typing import List, Union
 
 
 class Keithley_2231A(VisaResource):
@@ -279,3 +280,49 @@ class Keithley_2231A(VisaResource):
         response = self.query_resource("OUTPut:STATe:ALL?")
         all_state = response not in ("ON", "1")
         self.write_resource(f"OUTP {all_state ^ True}")
+
+    def pop_error_queue(self) -> Union[str, None]:
+        """
+        pop_error_queue()
+
+        Retrieves a summary information of the error at the front of the error
+        queue (FIFO). Information consists of an error number and some
+        descriptive text. If the error queue is empty this function returns
+        None. To clear the queue either repeatedly pop elements off the queue
+        until it is empty or call the self.clear_status() method.
+
+        Returns:
+            Union[str, None]: Error summary information for the first item in
+                the error queue or None if the queue is empty.
+        """
+
+        response = self.query_resource("SYST:ERR?")
+        if response[0] == "0":
+            return None
+        return response.strip()
+
+    def error_queue(self) -> List[str]:
+        """
+        error_queue()
+
+        Retrieves the summary information for all errors currently in the error
+        queue (FIFO), clearing it in the process. Information for each error
+        consists of an error number and some descriptive text. If the error
+        queue is empty this function returns an empty list.
+
+        Returns:
+            Union[str, None]: Error summary information for the first item in
+                the error queue or None if the queue is empty.
+        Returns:
+            List: a list of error summary information for the errors in the
+                error queue. Ordered by occurrence.
+        """
+
+        queue = []
+        while True:
+            error = self.pop_error_queue()
+            if error is None:
+                break
+            queue.append(error)
+
+        return queue
