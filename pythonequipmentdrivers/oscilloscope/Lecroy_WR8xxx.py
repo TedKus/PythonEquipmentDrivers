@@ -13,10 +13,10 @@ class Lecroy_WR8xxx(VisaResource):
 
     address : str, address of the connected oscilloscope
 
-    object for accessing basic functionallity of the Lecroy_WR8xxx
+    object for accessing basic functionality of the Lecroy_WR8xxx
     Family of Oscilloscopes
 
-    Addtional information on the remote control capabilities of the scope can
+    Additional information on the remote control capabilities of the scope can
     be accessed at:
     http://cdn.teledynelecroy.com/files/manuals/maui-remote-control-and-automation-manual.pdf
     """
@@ -38,7 +38,7 @@ class Lecroy_WR8xxx(VisaResource):
         Args:
             channel (int): Channel number to select
             state (bool): Whether or not the respective channel is
-                selected/visable on the screen.
+                selected/visible on the screen.
         """
 
         self.write_resource(f"C{channel}:TRACE {'ON' if state else 'OFF'}")
@@ -47,7 +47,7 @@ class Lecroy_WR8xxx(VisaResource):
         """
         set_channel_scale(channel, scale)
 
-        sets the scale of vertical divisons for the specified channel
+        sets the scale of vertical divisions for the specified channel
 
         Args:
             channel (int): channel number to configure
@@ -61,7 +61,7 @@ class Lecroy_WR8xxx(VisaResource):
         """
         get_channel_scale(channel)
 
-        Retrives the scale for vertical divisons for the specified channel
+        Retrieves the scale for vertical divisions for the specified channel
 
         Args:
             channel (int): channel number to query information on
@@ -86,7 +86,7 @@ class Lecroy_WR8xxx(VisaResource):
         Kwargs
             use_divisions (bool, optional): Whether or not the offset is
                 treated as a number of vertical divisions instead of an
-                amplltude. Defaults to False.
+                amplitude. Defaults to False.
         """
 
         if kwargs.get("use_divisions", False):
@@ -98,7 +98,7 @@ class Lecroy_WR8xxx(VisaResource):
         """
         get_channel_offset(channel)
 
-        Retrives the vertical offset for the display of the specified channel.
+        Retrieves the vertical offset for the display of the specified channel.
 
         Args:
             channel (int): Channel number to query
@@ -137,7 +137,7 @@ class Lecroy_WR8xxx(VisaResource):
         if coupling not in coupling_map.keys():
             raise ValueError(
                 f"Invalid Coupling option: {coupling}. "
-                f"Suuport options are: {coupling_map.keys()}"
+                f"Support options are: {coupling_map.keys()}"
             )
 
         cmd_str = f"C{channel}:COUPLING {coupling_map[coupling]}"
@@ -147,7 +147,7 @@ class Lecroy_WR8xxx(VisaResource):
         """
         get_channel_coupling(channel)
 
-        Retirives the coupling used on a the specified channel. For this
+        Retrieves the coupling used on a the specified channel. For this
         oscilloscope the following coupling options are supported:
         "dc", "dc_50", "ac", and "gnd".
 
@@ -172,7 +172,8 @@ class Lecroy_WR8xxx(VisaResource):
 
         self.write_resource("BWL OFF")
 
-    def set_channel_bandwidth_limit(self, channel: int, bandwidth: str) -> None:
+    def set_channel_bandwidth_limit(self, channel: int,
+                                    bandwidth: str) -> None:
 
         if bandwidth.upper() not in self.bandwidth_settings:
             raise ValueError(
@@ -216,7 +217,7 @@ class Lecroy_WR8xxx(VisaResource):
         """
         set_horizontal_scale(scale)
 
-        sets the scale of horizontal divisons (for all channels) to the
+        sets the scale of horizontal divisions (for all channels) to the
         specified value in seconds.
 
         Args:
@@ -230,13 +231,72 @@ class Lecroy_WR8xxx(VisaResource):
         """
         get_horizontal_scale()
 
-        Retrieves the horizontal scale used to accquire waveform data.
+        Retrieves the horizontal scale used to acquire waveform data.
 
         Returns:
             float: horizontal scale in seconds per division.
         """
 
         response = self.query_resource("TIME_DIV?")
+        val = response.split()[1]
+        return float(val)
+
+    def set_horizontal_offset(self, offset: float = 0.0) -> None:
+        """
+        set_horizontal_offset(offset)
+
+        sets the offset of horizontal divisions (for all channels) to the
+        specified value in seconds.
+
+        Args:
+            offset (float): time offset of horizontal trigger position
+                on the display in seconds. Default 0.0.
+        """
+        q_str = ("""vbs 'app.Acquisition.Horizontal.horOffset""" +
+                 f""" = "{offset}" ' """)
+        self.write_resource(q_str)
+
+    def get_horizontal_offset(self) -> float:
+        """
+        get_horizontal_offset()
+
+        Retrieves the horizontal offset used to acquire waveform data.
+
+        Returns:
+            float: horizontal offset in seconds per division.
+        """
+        q_str = ("""vbs? ' return = app.Acquisition.Horizontal.HorOffset' """)
+        response = self.query_resource(q_str)
+        val = response.split()[1]
+        return float(val)
+
+    def set_horizontal_offset_division(self, division: float = 0.0) -> None:
+        """
+        set_horizontal_offset_division(division)
+
+        sets the offset of horizontal divisions (for all channels) to the
+        specified value in divisions.
+
+        Args:
+            division (float): division offset of horizontal trigger position
+                on the display in divisions. Default 0.0.
+        """
+        q_str = ("""vbs 'app.Acquisition.Horizontal.horOffsetOrigin""" +
+                 f""" = "{division}" ' """)
+        self.write_resource(q_str)
+
+    def get_horizontal_offset_division(self) -> float:
+        """
+        get_horizontal_offset_division()
+
+        Retrieves the horizontal offset used to acquire waveform data.
+
+        Returns:
+            float: horizontal offset in divisions.
+        """
+        q_str = ("""vbs? ' return = app.Acquisition.""" +
+                 """Horizontal.HorOffsetOrigin' """)
+        response = self.query_resource(q_str)
         val = response.split()[1]
         return float(val)
 
@@ -247,7 +307,7 @@ class Lecroy_WR8xxx(VisaResource):
         Sets the number of points used to store each waveform in memory.
         Built-in settings in this scope allow for the following sizes: 500,
         1000, 2500, 5000, 10000, 25000, 50000, 100000, 250000, 500000, 1000000,
-        2500000, 5000000, 10000000, 25000000. Any size not specifed here will
+        2500000, 5000000, 10000000, 25000000. Any size not specified here will
         round to the nearest value in the list.
 
         Args:
@@ -260,7 +320,7 @@ class Lecroy_WR8xxx(VisaResource):
         """
         get_memory_size()
 
-        Retrives the number of points used to store each waveform in memory.
+        Retrieves the number of points used to store each waveform in memory.
 
         Returns:
             int: number of points
@@ -271,13 +331,12 @@ class Lecroy_WR8xxx(VisaResource):
         match = re.findall(r"M\w* (\d*E?[+-]?\d*) SAMPLE", response)
 
         if not match:
-            raise ValueError("Error retriveing value from oscilloscope")
+            raise ValueError("Error retrieving value from oscilloscope")
 
         return int(float(match[0]))
 
-    def set_measure_config(
-        self, channel: int, meas_type: int, meas_idx: int, source_type: str = "channel"
-    ) -> None:
+    def set_measure_config(self, channel: int, meas_type: int, meas_idx: int,
+                           source_type: str = "channel") -> None:
         """
         set_measure_config(channel: int, meas_type: int, meas_idx: int,
                            source_type: str = 'channel') -> None
@@ -297,8 +356,8 @@ class Lecroy_WR8xxx(VisaResource):
                     XMAX, XMIN, XAPK, TOP
             meas_idx (int): measurement index for the measurement to set up.
             source_type (str, optional): Determines how to interpret the
-                "channel" arguement, if source_type='channel' this responds to
-                the signal physically connection to a front pannel BNC
+                "channel" argument, if source_type='channel' this responds to
+                the signal physically connection to a front panel BNC
                 connection. If source_type='zoom' this refers to one of the
                 zoomed-in versions of a channel stored in memory, and if
                 source_type='math' then it refers to one of signals stored in
@@ -315,10 +374,10 @@ class Lecroy_WR8xxx(VisaResource):
         """
         get_measure_config(self, meas_idx: int) -> Dict[str, str]
 
-        Returns the configuration information for an existing meaurement
+        Returns the configuration information for an existing measurement
 
         Args:
-            meas_idx (int): index of the measurement to retreive the
+            meas_idx (int): index of the measurement to retrieve the
                 information on.
 
         Returns:
@@ -336,7 +395,7 @@ class Lecroy_WR8xxx(VisaResource):
         """
         get_measure_data(*meas_idx)
 
-        Returns the current value of the requesed measurement(s) reference by
+        Returns the current value of the requested measurement(s) reference by
         the provided index(s).
 
         Args:
@@ -371,9 +430,9 @@ class Lecroy_WR8xxx(VisaResource):
         get_measure_statistics(meas_idx: int, stat_filter: str = ''
                                ) -> Union[Dict[str, float], float]
 
-        Queries the statisical information captured for a given measurement (if
-        statistics are enabled). Avaible statistics are: 'mean','max', 'min',
-        'last', 'stdev', 'n'.
+        Queries the statistical information captured for a given measurement
+        (if statistics are enabled). Available statistics are: 'mean','max',
+        'min', 'last', 'stdev', 'n'.
 
         Args:
             meas_idx (int): measurement index(s) for the measurement(s) to
@@ -390,7 +449,7 @@ class Lecroy_WR8xxx(VisaResource):
         response = self.query_resource(f"PAST? CUST,,P{meas_idx}")
 
         # strip out header info about measurement
-        data = response[response.index(",") + 1 :].strip().split(",")
+        data = response[response.index(",") + 1:].strip().split(",")
         data = data[3:]
 
         keys = map(str.lower, data[::2])
@@ -436,7 +495,7 @@ class Lecroy_WR8xxx(VisaResource):
         """
         reset_measure_statistics()
 
-        resets the accumlated measurements used to calculate statistics
+        resets the accumulated measurements used to calculate statistics
         """
 
         self.write_resource("VBS 'app.ClearSweeps' ")
@@ -448,7 +507,7 @@ class Lecroy_WR8xxx(VisaResource):
         """
         trigger_run()
 
-        sets the state of the oscilloscopes acquision mode to acquire new
+        sets the state of the oscilloscopes acquisition mode to acquire new
         data.
         """
 
@@ -469,7 +528,7 @@ class Lecroy_WR8xxx(VisaResource):
         """
         trigger_stop()
 
-        sets the state of the oscilloscopes acquision mode to stop
+        sets the state of the oscilloscopes acquisition mode to stop
         acquiring new data. equivalent to set_trigger_acquire_state(0).
         """
         self.write_resource("STOP")
@@ -488,7 +547,7 @@ class Lecroy_WR8xxx(VisaResource):
         """
         trigger_auto()
 
-        Sets the state of the oscilloscopes acquision mode to acquire new
+        Sets the state of the oscilloscopes acquisition mode to acquire new
         data automatically.
         """
 
@@ -520,7 +579,7 @@ class Lecroy_WR8xxx(VisaResource):
 
         response = self.query_resource("TRSE?")  # get current trigger config
 
-        # extract indecies that bound the current trigger source
+        # extract indices that bound the current trigger source
         i_start = response.index("SR,") + 3
         i_end = response.index(",", i_start)
 
@@ -537,7 +596,7 @@ class Lecroy_WR8xxx(VisaResource):
 
         response = self.query_resource("TRSE?")  # get current trigger config
 
-        # extract indecies that bound the current trigger source
+        # extract indices that bound the current trigger source
         i_start = response.index("SR,") + 3
         i_end = response.index(",", i_start)
 
@@ -559,7 +618,7 @@ class Lecroy_WR8xxx(VisaResource):
 
         response = self.query_resource("TRSE?")  # get current trigger config
 
-        # extract indecies that bound the current trigger source
+        # extract indices that bound the current trigger source
         i_start = response.index("SR,") + 3
         i_end = response.index(",", i_start)
 
@@ -573,12 +632,12 @@ class Lecroy_WR8xxx(VisaResource):
         """
         set_trigger_acquire_state(state)
 
-        state: (str) trigger state, valid arguements are listed in
+        state: (str) trigger state, valid arguments are listed in
                self.valid_trigger_states
 
         sets the state of the oscilloscopes trigger, whether its
         currently acquiring new data or not and which method is used for
-        triggering additional acquision events.
+        triggering additional acquisition events.
         """
 
         state = state.upper()
@@ -592,12 +651,12 @@ class Lecroy_WR8xxx(VisaResource):
         get_trigger_acquire_state()
 
         returns:
-        state: (str) acquire state, valid arguements are listed in
+        state: (str) acquire state, valid arguments are listed in
                self.valid_trigger_states
 
         returns the state of the oscilloscopes trigger, whether its
         currently acquiring new data or not and which method is used for
-        triggering additional acquision events.
+        triggering additional acquisition events.
         """
 
         response = self.query_resource("TRMD?")
@@ -659,13 +718,13 @@ class Lecroy_WR8xxx(VisaResource):
         Automatically sets trigger level to signal mean.
         """
 
-        self.write_resource("""vbs 'app.acquisition.Trigger.FindLevel'""")
+        self.write_resource("""vbs 'app.Acquisition.Trigger.FindLevel'""")
 
     def set_trigger_slope(self, slope: str, **kwargs) -> None:
         """
         set_trigger_slope(slope, **kwargs)
 
-        Sets the edge polarity of the acquistion trigger. Valid options for
+        Sets the edge polarity of the acquisition trigger. Valid options for
         this oscilloscope are 'rise'/'pos' or 'fall'/'neg'.
 
         Args:
@@ -676,7 +735,9 @@ class Lecroy_WR8xxx(VisaResource):
                 currently being used for triggering.
         """
 
-        valid_options = {"POS": "POS", "RISE": "POS", "NEG": "NEG", "FALL": "NEG"}
+        valid_options = {
+            "POS": "POS", "RISE": "POS", "NEG": "NEG", "FALL": "NEG"
+            }
 
         source = kwargs.get("source", self.get_trigger_source())
         if isinstance(source, int):
@@ -695,8 +756,8 @@ class Lecroy_WR8xxx(VisaResource):
         """
         get_trigger_slope(**kwargs)
 
-        Retrives the edge polarity of the acquistion trigger. Valid options for
-        this oscilloscope are 'rise'/'pos' or 'fall'/'neg'.
+        Retrieves the edge polarity of the acquisition trigger. Valid options
+        for this oscilloscope are 'rise'/'pos' or 'fall'/'neg'.
 
         Kwargs:
             source (int): channel number to set the trigger level for. If not
@@ -743,7 +804,7 @@ class Lecroy_WR8xxx(VisaResource):
         """
         get_trigger_position()
 
-        Retrives the horizontal position of the trigger point which
+        Retrieves the horizontal position of the trigger point which
         representing the t=0 point of the data capture.
 
         Returns:
@@ -760,7 +821,7 @@ class Lecroy_WR8xxx(VisaResource):
 
         Saves the screen image to the location specified by "image_title".
         "image_title" can contain path information to the desired save
-        directory. Specifying an extension is not nessary, a file extension
+        directory. Specifying an extension is not necessary, a file extension
         will be automatically be added based on the image format used (default:
         PNG)
 
@@ -768,7 +829,7 @@ class Lecroy_WR8xxx(VisaResource):
             image_title (Union[str, Path]): Path name of image, file extension
                 will be added automatically
         Kwargs:
-            image_format (str, optional): File extention to save the image
+            image_format (str, optional): File extension to save the image
                 with, valid options are png, and 'tiff'. Defaults to png.
             image_orientation (str, optional): Orientation of the resulting
                 image, valid options are 'portrait' and 'landscape'. Defaults
@@ -814,9 +875,11 @@ class Lecroy_WR8xxx(VisaResource):
 
         # initiate transfer
         template = (
-            r"HARDCOPY_SETUP DEV, {}, FORMAT, {}, " r"BCKG, {}, AREA, {}, PORT, {}"
+            r"HARDCOPY_SETUP DEV, {}, FORMAT, {}, "
+            r"BCKG, {}, AREA, {}, PORT, {}"
         )
-        write_cmd = template.format(xfer_ext, image_orient, bg_color, screen_area, port)
+        write_cmd = template.format(xfer_ext, image_orient, bg_color,
+                                    screen_area, port)
         self.write_resource(write_cmd)
         self.write_resource("SCREEN_DUMP")
 
@@ -833,7 +896,7 @@ class Lecroy_WR8xxx(VisaResource):
         for item in response.splitlines()[2:-1]:
             idx = item.index(":")
             key = item[:idx].strip().lower()
-            value = item[idx + 1 :].strip().lower()
+            value = item[idx + 1:].strip().lower()
             try:
                 value = float(value)
                 if value.is_integer():
@@ -923,7 +986,22 @@ class Lecroy_WR8xxx(VisaResource):
             label (str): text label to assign to the specified
         """
 
-        q_str = f"""vbs 'app.acquisition.C{channel}.LabelsText = "{label}" '"""
+        q_str = f"""vbs 'app.Acquisition.C{channel}.LabelsText = "{label}" '"""
+        self.write_resource(q_str)
+
+    def set_zoom_channel_label(self, channel: int, label: str) -> None:
+        """
+        set_zoom_channel_label(channel, label)
+
+        updates the text label on a channel specified by "channel" with the
+        value given in "label".
+
+        Args:
+            channel (int): zoom channel number to update label of.
+            label (str): text label to assign to the specified
+        """
+
+        q_str = f"""vbs 'app.Zoom.Z{channel}.LabelsText = "{label}" '"""
         self.write_resource(q_str)
 
     def get_channel_label(self, channel: int) -> str:
@@ -938,11 +1016,29 @@ class Lecroy_WR8xxx(VisaResource):
             (str): text label to assigned to the specified channel
         """
 
-        q_str = f"""vbs? 'return = app.acquisition.C{channel}.LabelsText'"""
+        q_str = f"""vbs? 'return = app.Acquisition.C{channel}.LabelsText'"""
 
         response = self.query_resource(q_str)
 
         return " ".join(response.split()[1:])
+
+    def get_zoom_channel_label(self, channel: int) -> str:
+        """
+        get_zoom_channel_label(channel)
+
+        Queries the text label of the channel specified by "channel".
+
+        Args:
+            channel (int): zoom channel number to query label of.
+        Returns:
+            (str): text label to assigned to the specified channel
+        """
+
+        q_str = f"""vbs? 'return = app.Zoom.Z{channel}.LabelsText'"""
+
+        response = self.query_resource(q_str)
+
+        return ' '.join(response.split()[1:])
 
     def set_channel_alias(self, channel: int, alias: str) -> None:
         """
@@ -956,10 +1052,26 @@ class Lecroy_WR8xxx(VisaResource):
             alias (str): text to assign to the specified channel
         """
 
-        q_str = f"""vbs 'app.acquisition.C{channel}.Alias = "{alias}" '"""
+        q_str = f"""vbs 'app.Acquisition.C{channel}.Alias = "{alias}" '"""
         self.write_resource(q_str)
 
-    def set_channel_label_position(self, channel: int, position: float = 0) -> None:
+    def set_zoom_channel_alias(self, channel: int, alias: str) -> None:
+        """
+        set_zoom_channel_alias(channel, name)
+
+        updates the alias string assigned to a specified channel, "channel",
+        with the value given in "alias".
+
+        Args:
+            channel (int): zoom channel number to update label of.
+            alias (str): text to assign to the specified channel
+        """
+
+        q_str = f"""vbs 'app.Zoom.Z{channel}.Alias = "{alias}" '"""
+        self.write_resource(q_str)
+
+    def set_channel_label_position(self, channel: int,
+                                   position: float = 0) -> None:
         """set_channel_label_position(channel, position)
 
         Args:
@@ -969,9 +1081,23 @@ class Lecroy_WR8xxx(VisaResource):
         """
 
         q_str = (
-            f"""vbs 'app.acquisition.C{channel}.LabelsPosition = """
+            f"""vbs 'app.Acquisition.C{channel}.LabelsPosition = """
             + f""""{position}" '"""
         )
+        self.write_resource(q_str)
+
+    def set_zoom_channel_label_position(self, channel: int,
+                                        position: float = 0) -> None:
+        """set_zoom_channel_label_position(channel, position)
+
+        Args:
+            channel (int): zoom channel number to update the label of
+            position (float, optional): time position relative to trigger to
+            place the label. Units are in seconds. Defaults to 0.
+        """
+
+        q_str = (f"""vbs 'app.Zoom.Z{channel}.LabelsPosition = """ +
+                 f""""{position}" '""")
         self.write_resource(q_str)
 
     def set_channel_label_view(self, channel: int, view: bool = True) -> None:
@@ -988,10 +1114,87 @@ class Lecroy_WR8xxx(VisaResource):
         """
 
         q_str = (
-            f"""vbs 'app.acquisition.C{channel}.LabelsPosition = """
+            f"""vbs 'app.Acquisition.C{channel}.LabelsPosition = """
             + f""""{'ON' if view else 'OFF'}" '"""
         )
         self.write_resource(q_str)
+
+    def set_zoom_channel_label_view(self, channel: int,
+                                    view: bool = True) -> None:
+        """set_zoom_channel_label_view(channel, view)
+
+        Turn channel label visibility on or off, also resets label position to
+        trigger position (time zero).  Use set_channel_label_position() AFTER
+        this command to prevent loss of position setting.
+
+        Args:
+            channel (int): zoom channel number to show/hide the label of
+            view (bool, optional): True = label 'ON', False = label 'OFF'
+            Defaults to True 'ON'
+        """
+
+        q_str = (f"""vbs 'app.Zoom.Z{channel}.ViewLabels = """ +
+                 f""""{'ON' if view else 'OFF'}" '""")
+        self.write_resource(q_str)
+
+    def set_digital_label_source(self, group: int = 1,
+                                 labels: str = 'CUSTOM') -> None:
+        """
+        set_digital_label_source(group, labels)
+
+        updates the text label source on a digital group with the
+        value given in "labels".
+
+        Args:
+            group (int): digital group number to update label of. 1-4.
+            label (str): DATA, ADDRESS, CUSTOM
+        """
+        labels = labels.upper()
+        if labels not in {'DATA', 'ADDRESS', 'CUSTOM'}:
+            raise ValueError('Invalid option for "labels" arg')
+
+        q_str = (f"""vbs 'app.LogicAnalyzer.Digital{group}.Labels""" +
+                 f""" = "{labels}" '""")
+        self.write_resource(q_str)
+
+    def set_digital_label(self, channel: int, label: str,
+                          group: int = 1) -> None:
+        """
+        set_digital_label(channel, label, group)
+
+        updates the text label on a channel specified by "channel" with the
+        value given in "label", in digital group given in "group"
+
+        Args:
+            channel (int): channel number to update label of. 0-16.
+            group (int): digital group number to update label of. 1-4.
+            label (str): text label to assign to the specified
+        """
+
+        q_str = (f"""vbs 'app.LogicAnalyzer.Digital{group}.CustomBitName""" +
+                 f"""{channel} = "{label}" '""")
+        self.write_resource(q_str)
+
+    def get_digital_label(self, channel: int, group: int = 1) -> str:
+        """
+        get_digital_label(channel, group)
+
+        Queries the text label of the digital channel specified by "channel"
+        and "group"
+
+        Args:
+            channel (int): channel number to query label of.
+            group (int): digital group number to query label of.
+        Returns:
+            (str): text label to assigned to the specified channel
+        """
+
+        q_str = (f"""vbs? 'return = app.LogicAnalyzer.Digital{group}.""" +
+                 f"""CustomBitName{channel}'""")
+
+        response = self.query_resource(q_str)
+
+        return ' '.join(response.split()[1:])
 
     def set_channel_findscale(self, channel: int) -> None:
         """
@@ -1004,7 +1207,7 @@ class Lecroy_WR8xxx(VisaResource):
             channel (int): channel number to update scale of.
         """
 
-        q_str = f"""vbs 'app.acquisition.C{channel}.FindScale'"""
+        q_str = f"""vbs 'app.Acquisition.C{channel}.FindScale'"""
         self.write_resource(q_str)
 
     def get_channel_alias(self, channel: int) -> str:
@@ -1019,7 +1222,7 @@ class Lecroy_WR8xxx(VisaResource):
             (str): alias to assigned to the specified channel
         """
 
-        q_str = f"""vbs? 'return = app.acquisition.C{channel}.Alias'"""
+        q_str = f"""vbs? 'return = app.Acquisition.C{channel}.Alias'"""
         response = self.query_resource(q_str)
 
         return response.split()[1]
@@ -1028,13 +1231,13 @@ class Lecroy_WR8xxx(VisaResource):
         """
         set_channel_display(channel, mode)
 
-        Sets the visablity of the specified channel.
+        Sets the visibility of the specified channel.
 
         Args:
             channel (int): channel number to configure.
-            mode (bool): Whether or not the channel is visable on the screen
+            mode (bool): Whether or not the channel is visible on the screen
         """
-        q_str = f"""vbs 'app.acquisition.C{channel}.View = {bool(mode)} '"""
+        q_str = f"""vbs 'app.Acquisition.C{channel}.View = {bool(mode)} '"""
         self.write_resource(q_str)
 
     def set_persistence_state(self, state: bool) -> None:
@@ -1068,14 +1271,15 @@ class Lecroy_WR8xxx(VisaResource):
             self.write_resource(f"PESU {duration},ALL")
         else:
             raise ValueError(
-                "Invalid duration, valid times (s): " + ", ".join(map(str, valid_durs))
-            )
+                "Invalid duration, valid times (s): " + ", ".join(
+                    map(str, valid_durs))
+                )
 
     def get_persistence_time(self) -> Union[float, str]:
         """
         get_persistence_time()
 
-        Retrives the persistence time set for the waveform buffers.
+        Retrieves the persistence time set for the waveform buffers.
 
         Returns:
             (Union[float, str]): persistence time
@@ -1124,7 +1328,7 @@ class Lecroy_WR8xxx(VisaResource):
         """
         get_comm_header()
 
-        Rreturns the header type used in the response of query commands.
+        Returns the header type used in the response of query commands.
         Response is either 'long', 'short', and 'off'. An example of each is
         noted below.
 
