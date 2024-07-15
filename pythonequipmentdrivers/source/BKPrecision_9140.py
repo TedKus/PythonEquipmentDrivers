@@ -2,9 +2,9 @@ from .Keithley_2231A import Keithley_2231A
 
 
 # acts as an alias of Keithley_2231A
-class BKPrecision_9132B(Keithley_2231A):
+class BKPrecision_9140(Keithley_2231A):
     """
-    BKPrecision_9132B(address)
+    BKPrecision_9140(address)
 
     address : str, address of the connected power supply
 

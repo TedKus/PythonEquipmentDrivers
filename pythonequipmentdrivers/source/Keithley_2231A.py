@@ -13,7 +13,7 @@ class Keithley_2231A(VisaResource):
         with the instance.
 
 
-    object for accessing basic functionallity of the Keithley DC supply
+    object for accessing basic functionality of the Keithley DC supply
     """
 
     def __init__(self, address: str, channel: int = None, **kwargs) -> None:
@@ -31,7 +31,7 @@ class Keithley_2231A(VisaResource):
 
         mode: str, interface method either 'remote' or 'local'
 
-        set access to the device inferface to 'remote' or 'local'
+        set access to the device interface to 'remote' or 'local'
         """
 
         if mode.lower() == "remote":
@@ -100,7 +100,7 @@ class Keithley_2231A(VisaResource):
         """
         get_state(channel)
 
-        Retrives the current state of the output of the supply.
+        Retrieve the current state of the output of the supply.
 
         Args:
             channel (int): index of the channel to control. Valid options
@@ -163,9 +163,10 @@ class Keithley_2231A(VisaResource):
 
         voltage: float or int, amplitude to set output to in Vdc
 
-        channel: int=None, the index of the channel to set. Valid options are 1,2,3.
+        channel: int=None, the index of the channel to set.
+        Valid options are 1-3
 
-        set the output voltage setpoint of channel "channel" specified by
+        set the output voltage set point of channel "channel" specified by
         "voltage"
         """
 
@@ -176,9 +177,10 @@ class Keithley_2231A(VisaResource):
         """
         get_voltage()
 
-        channel: int=None, the index of the channel to set. Valid options are 1,2,3.
+        channel: int=None, the index of the channel to set.
+        Valid options are 1-3
 
-        gets the output voltage setpoint in Vdc
+        gets the output voltage set point in Vdc
 
         returns: float
         """
@@ -191,9 +193,10 @@ class Keithley_2231A(VisaResource):
         """
         set_current(current)
 
-        current: float/int, current limit setpoint in Adc
+        current: float/int, current limit set point in Adc
 
-        channel: int=None, the index of the channel to set. Valid options are 1,2,3.
+        channel: int=None, the index of the channel to set.
+        Valid options are 1-3
 
         sets the current limit setting for the power supply in Adc
         """
@@ -205,7 +208,8 @@ class Keithley_2231A(VisaResource):
         """
         get_current()
 
-        channel: int=None, the index of the channel to set. Valid options are 1,2,3.
+        channel: int=None, the index of the channel to set.
+        Valid options are 1-3
 
         gets the current limit setting for the power supply in Adc
 
@@ -243,3 +247,35 @@ class Keithley_2231A(VisaResource):
         self._update_channel(channel)
         response = self.query_resource("MEAS:CURR?")
         return float(response)
+
+    def all_on(self) -> None:
+        """
+        all_on()
+
+        Enables the relay for ALL the power supply's outputs.
+
+        """
+
+        self.write_resource(f"OUTP {1}")
+
+    def all_off(self) -> None:
+        """
+        all_off()
+
+        Disables the relay for ALL the power supply's outputs.
+
+        """
+
+        self.write_resource(f"OUTP {0}")
+
+    def all_toggle(self) -> None:
+        """
+        all_toggle()
+
+        Reverses the current state of ALL the Supply's outputs.
+        Performs a Read State Write State.
+
+        """
+        response = self.query_resource("OUTPut:STATe:ALL?")
+        all_state = response not in ("ON", "1")
+        self.write_resource(f"OUTP {all_state ^ True}")
