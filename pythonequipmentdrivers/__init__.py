@@ -1,9 +1,9 @@
-from . import (daq, errors, functiongenerator, multimeter, networkanalyzer,
-               oscilloscope, powermeter, sink, source, temperaturecontroller,
-               utility)
 from .core import (GpibInterface, VisaResource, find_visa_resources,
                    identify_visa_resources)
 from .resource_collections import ResourceCollection, connect_resources
+from . import (daq, errors, functiongenerator, multimeter, networkanalyzer,
+               oscilloscope, powermeter, sink, source, temperaturecontroller,
+               utility)
 
 __all__ = [
     "VisaResource",
