@@ -1,4 +1,5 @@
-from ..core import VisaResource
+from ..import core
+VisaResource = core.VisaResource
 
 
 class Elgar_5250A(VisaResource):

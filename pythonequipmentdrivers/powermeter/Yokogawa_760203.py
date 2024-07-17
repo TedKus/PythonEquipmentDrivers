@@ -1,7 +1,8 @@
 from enum import Enum
 from typing import List, Tuple, Union
 
-from ..core import VisaResource
+from ..import core
+VisaResource = core.VisaResource
 
 
 class MeasurementTypes(Enum):

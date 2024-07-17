@@ -1,6 +1,7 @@
 from typing import Generator, Iterable, List, Tuple, Union
 
-from ..core import VisaResource
+from ..import core
+VisaResource = core.VisaResource
 
 
 class Keysight_33500B(VisaResource):

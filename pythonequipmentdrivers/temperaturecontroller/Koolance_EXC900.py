@@ -3,7 +3,8 @@ from dataclasses import dataclass
 from time import time
 from typing import Literal
 
-from ..core import VisaResource
+from ..import core
+VisaResource = core.VisaResource
 
 logger = logging.getLogger(__name__)
 

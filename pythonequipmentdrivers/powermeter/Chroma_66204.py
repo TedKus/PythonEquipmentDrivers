@@ -1,6 +1,7 @@
 from typing import Iterable, Tuple, Union
 
-from ..core import VisaResource
+from ..import core
+VisaResource = core.VisaResource
 
 
 class Chroma_66204(VisaResource):  # 3 phase + neutral / output

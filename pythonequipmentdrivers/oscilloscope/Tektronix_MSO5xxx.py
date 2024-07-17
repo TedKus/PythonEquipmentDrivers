@@ -4,7 +4,8 @@ from typing import Tuple, Union
 
 import numpy as np
 
-from ..core import VisaResource
+from ..import core
+VisaResource = core.VisaResource
 
 
 class Tektronix_MSO5xxx(VisaResource):

@@ -3,8 +3,9 @@ from typing import Union
 import pyvisa
 from pyvisa.constants import BufferOperation
 
-from ..core import VisaResource, rm
-
+from ..import core
+VisaResource = core.VisaResource
+rm = core.rm
 
 class Fluke45SerialError(Exception):
     """

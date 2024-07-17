@@ -1,4 +1,5 @@
-from ..core import VisaResource
+from ..import core
+VisaResource = core.VisaResource
 
 
 class Keithley_2231A(VisaResource):

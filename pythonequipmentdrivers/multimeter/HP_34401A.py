@@ -1,7 +1,8 @@
 from time import sleep
 from typing import Any, List, Union
 
-from ..core import VisaResource
+from ..import core
+VisaResource = core.VisaResource
 
 
 class HP_34401A(VisaResource):

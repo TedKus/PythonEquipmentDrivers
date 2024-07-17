@@ -1,6 +1,7 @@
 from typing import Iterable, List, Optional, Tuple, Union
 
-from ..core import VisaResource
+from ..import core
+VisaResource = core.VisaResource
 
 
 class PPSC_3150AFX(VisaResource):

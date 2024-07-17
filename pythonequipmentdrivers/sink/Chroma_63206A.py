@@ -1,6 +1,7 @@
 from typing import Tuple, Union
 
-from ..core import VisaResource
+from ..import core
+VisaResource = core.VisaResource
 
 
 class Chroma_63206A(VisaResource):  # 6 kW

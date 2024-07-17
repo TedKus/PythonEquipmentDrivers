@@ -1,6 +1,7 @@
 from typing import List, Union
 
-from ..core import VisaResource
+from ..import core
+VisaResource = core.VisaResource
 
 
 class Yokogawa_760401(VisaResource):  # single phase

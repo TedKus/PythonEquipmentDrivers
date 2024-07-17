@@ -1,6 +1,7 @@
 from typing import Tuple
 
-from ..core import VisaResource
+from ..import core
+VisaResource = core.VisaResource
 
 
 class Intepro_PSI9000(VisaResource):

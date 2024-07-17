@@ -1,6 +1,7 @@
 from typing import Any, Dict, List, Tuple
 
-from ..core import VisaResource
+from ..import core
+VisaResource = core.VisaResource
 
 
 class Chroma_62000P(VisaResource):
