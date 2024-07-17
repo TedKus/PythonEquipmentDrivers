@@ -22,8 +22,9 @@ def find_visa_resources(query: str = "?*::INSTR") -> Tuple[str]:
 
 
 def identify_visa_resources(
-    resources: Optional[Iterable[str]] = None, verbose: bool = False, **kwargs
-) -> List[Tuple[str, str]]:
+                            resources: Optional[Iterable[str]] = None,
+                            verbose: bool = False, **kwargs
+                            ) -> List[Tuple[str, str]]:
     """
     identify_connections(resources=None, verbose=False)
 
@@ -203,7 +204,8 @@ class VisaResource:
         """
         try:
             # generic set local method for most GPIB, USB, TCIP
-            self._resource.control_ren(pyvisa.constants.RENLineOperation.address_gtl)
+            self._resource.control_ren(
+                pyvisa.constants.RENLineOperation.address_gtl)
         except (AttributeError, pyvisa.Error):
             # not a device that has control_ren method
             pass
