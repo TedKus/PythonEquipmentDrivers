@@ -1,7 +1,6 @@
 from typing import Iterable, Tuple, Union
 
-from ..import core
-VisaResource = core.VisaResource
+from pythonequipmentdrivers.core import VisaResource
 
 
 class Chroma_66204(VisaResource):  # 3 phase + neutral / output

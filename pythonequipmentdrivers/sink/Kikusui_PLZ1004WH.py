@@ -1,7 +1,6 @@
 from typing import Union
 
-from ..import core
-VisaResource = core.VisaResource
+from pythonequipmentdrivers.core import VisaResource
 
 
 class Kikusui_PLZ1004WH(VisaResource):  # 1 kW

@@ -1,5 +1,4 @@
-from ..import core
-VisaResource = core.VisaResource
+from pythonequipmentdrivers.core import VisaResource
 
 
 class HP_6632A(VisaResource):

@@ -1,7 +1,6 @@
 from typing import Tuple, Union
 
-from ..import core
-VisaResource = core.VisaResource
+from pythonequipmentdrivers.core import VisaResource
 
 
 class Chroma_63206A(VisaResource):  # 6 kW

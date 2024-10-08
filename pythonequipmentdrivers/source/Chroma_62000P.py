@@ -1,7 +1,6 @@
 from typing import Any, Dict, List, Tuple
 
-from ..import core
-VisaResource = core.VisaResource
+from pythonequipmentdrivers.core import VisaResource
 
 
 class Chroma_62000P(VisaResource):
