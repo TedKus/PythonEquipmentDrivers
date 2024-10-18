@@ -204,7 +204,8 @@ class VisaResource:
         """
         try:
             # generic set local method for most GPIB, USB, TCIP
-            self._resource.control_ren(pyvisa.constants.RENLineOperation.address_gtl)
+            self._resource.control_ren(
+                pyvisa.constants.RENLineOperation.address_gtl)
         except (AttributeError, pyvisa.Error):
             # not a device that has control_ren method
             pass
@@ -416,7 +417,8 @@ class DummyDevice:
             # Initialize attributes from the mimicked class's __init__ method
             sig = inspect.signature(self.mimicked_device_class.__init__)
             for param in sig.parameters.values():
-                if param.name not in ['self', 'address'] and param.name not in self.attributes:
+                if param.name not in ['self', 'address'] and \
+                   param.name not in self.attributes:
                     if param.default is not param.empty:
                         self.attributes[param.name] = param.default
                     else:
@@ -428,7 +430,9 @@ class DummyDevice:
 
         def method(*args, **kwargs):
             self.state[name] = (args, kwargs)
-            if self.mimicked_device_class and hasattr(self.mimicked_device_class, name):
+            if self.mimicked_device_class and hasattr(
+                                               self.mimicked_device_class,
+                                               name):
                 original_method = getattr(self.mimicked_device_class, name)
                 return_type = get_type_hints(original_method).get('return')
                 if return_type:
@@ -440,14 +444,19 @@ class DummyDevice:
                         return 0.0
                     elif return_type == str:
                         return ""
-                    elif hasattr(return_type, '__origin__') and return_type.__origin__ == list:
+                    elif (hasattr(return_type, '__origin__') and
+                          return_type.__origin__ == list):
                         return []
                     # Add more type checks as needed
             return None
         return method
 
     def __setattr__(self, name: str, value: Any) -> None:
-        if name in ['address', 'mimicked_device_name', 'mimicked_device_class', 'state', 'attributes']:
+        if name in ['address',
+                    'mimicked_device_name',
+                    'mimicked_device_class',
+                    'state',
+                    'attributes']:
             super().__setattr__(name, value)
         else:
             self.attributes[name] = value
