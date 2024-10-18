@@ -4,12 +4,14 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Dict, Iterator, Tuple, Union
 from enum import Enum
+import warnings
 
 from pyvisa import VisaIOError
 
 from .errors import ResourceConnectionError, UnsupportedResourceError
 
-__all__ = ["ResourceCollection", "connect_resources", "initiaize_device"]
+__all__ = ["ResourceCollection", "connect_resources", "initiaize_device",
+           "connect_equipment"]
 
 
 def read_configuration(config_info: Union[str, Path, dict]) -> dict:
@@ -123,9 +125,8 @@ class DmmCollection(ResourceCollection):
             try:
                 measurements[new_name] = resource.fetch_data()
             except AttributeError as exc:
-                raise AttributeError(
-                    "All multimeter instances must have a " '"fetch_data" method'
-                ) from exc
+                raise AttributeError("All multimeter instances must have a "
+                                     '"fetch_data" method') from exc
 
         return measurements
 
@@ -154,10 +155,16 @@ class DmmCollection(ResourceCollection):
                 pass
 
 
-# Update expected/assumed format of json file
+def connect_equipment(config: Union[str, Path, dict],
+                      **kwargs) -> ResourceCollection:
+    warnings.warn("connect_equipment is deprecated and may be removed in a "
+                  "future version. Use connect_resources instead.",
+                  DeprecationWarning, stacklevel=2)
+    return connect_resources(config, **kwargs)
 
 
-def connect_resources(config: Union[str, Path, dict], **kwargs) -> ResourceCollection:
+def connect_resources(config: Union[str, Path, dict],
+                      **kwargs) -> ResourceCollection:
     """
     connect_resources(config, **kwargs)
 
@@ -352,7 +359,8 @@ def get_callable_methods(instance) -> Tuple:
 
     # get methods that are callable (will not include sub-classes)
     methods = instance.__dir__()
-    cmds = filter(lambda method: (callable(getattr(instance, method))), methods)
+    cmds = filter(lambda method: (callable(getattr(instance, method))),
+                  methods)
 
     # filter out ignore dunders
     cmds = filter(lambda func_name: ("__" not in func_name), cmds)
@@ -361,7 +369,8 @@ def get_callable_methods(instance) -> Tuple:
 
 def convert_to_enum(instance, value):
     """
-    Attempt to convert a string value to an Enum value if a matching Enum exists in the instance.
+    Attempt to convert a string value to an Enum value if a matching Enum
+    exists in the instance.
     """
     for attr_name in dir(instance):
         attr = getattr(instance, attr_name)
@@ -402,7 +411,9 @@ def initiaize_device(instance, sequence) -> None:
                 func = getattr(instance, method_name)
                 # Convert string values to Enum values where possible
                 converted_kwargs = {
-                    key: convert_to_enum(instance, value) if isinstance(value, str) else value
+                    key: convert_to_enum(instance,
+                                         value) if isinstance(value,
+                                                              str) else value
                     for key, value in method_kwargs.items()
                 }
                 func(**converted_kwargs)

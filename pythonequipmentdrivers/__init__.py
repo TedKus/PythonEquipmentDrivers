@@ -3,7 +3,8 @@ from . import (daq, errors, functiongenerator, multimeter, networkanalyzer,
                utility)
 from .core import (GpibInterface, VisaResource, find_visa_resources,
                    identify_visa_resources)
-from .resource_collections import ResourceCollection, connect_resources
+from .resource_collections import (ResourceCollection, connect_resources,
+                                   connect_equipment)
 
 __all__ = [
     "VisaResource",
@@ -11,6 +12,7 @@ __all__ = [
     "find_visa_resources",
     "identify_visa_resources",
     "connect_resources",
+    "connect_equipment",
     "ResourceCollection",
     "utility",
     "errors",
