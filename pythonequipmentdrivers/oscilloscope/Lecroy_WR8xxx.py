@@ -3,8 +3,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Tuple, Union
 
 import numpy as np
-
-from ..core import VisaResource
+from pythonequipmentdrivers import VisaResource
 
 
 class Lecroy_WR8xxx(VisaResource):
@@ -21,13 +20,13 @@ class Lecroy_WR8xxx(VisaResource):
     http://cdn.teledynelecroy.com/files/manuals/maui-remote-control-and-automation-manual.pdf
     """
 
-    valid_trigger_states = ["AUTO", "NORM", "SINGLE", "STOP"]
+    valid_trigger_states = ['AUTO', 'NORM', 'SINGLE', 'STOP']
 
-    bandwidth_settings = {"20MHZ", "200MHZ", "350MHZ", "FULL"}
+    bandwidth_settings = {'20MHZ', '200MHZ', '350MHZ', "FULL"}
 
     def __init__(self, address: str, **kwargs) -> None:
         super().__init__(address, clear=True, **kwargs)
-        self.set_comm_header("short")
+        self.set_comm_header('short')
 
     def select_channel(self, channel: int, state: bool) -> None:
         """
@@ -55,7 +54,7 @@ class Lecroy_WR8xxx(VisaResource):
                 vertical division on the display.
         """
 
-        self.write_resource(f"C{channel}:VDIV {scale}")
+        self.write_resource(f'C{channel}:VDIV {scale}')
 
     def get_channel_scale(self, channel: int) -> float:
         """
@@ -70,7 +69,7 @@ class Lecroy_WR8xxx(VisaResource):
             (float): vertical scale
         """
 
-        response = self.query_resource(f"C{channel}:VDIV?")
+        response = self.query_resource(f'C{channel}:VDIV?')
         val = response.split()[1]
         return float(val)
 
@@ -89,8 +88,8 @@ class Lecroy_WR8xxx(VisaResource):
                 amplltude. Defaults to False.
         """
 
-        if kwargs.get("use_divisions", False):
-            off = off * self.get_channel_scale(channel)
+        if kwargs.get('use_divisions', False):
+            off = off*self.get_channel_scale(channel)
 
         self.write_resource(f"C{channel}:OFFSET {off}")
 
@@ -124,21 +123,15 @@ class Lecroy_WR8xxx(VisaResource):
             coupling (str): coupling mode
         """
 
-        coupling_map = {
-            "dc_1meg": "D1M",
-            "dc": "D1M",
-            "dc_50": "D50",
-            "ac_1meg": "A1M",
-            "ac": "A1M",
-            "gnd": "gnd",
-        }
+        coupling_map = {'dc_1meg': 'D1M', "dc": 'D1M',
+                        'dc_50': 'D50',
+                        'ac_1meg': 'A1M', 'ac': 'A1M',
+                        'gnd': 'gnd'}
 
         coupling = coupling.lower()
         if coupling not in coupling_map.keys():
-            raise ValueError(
-                f"Invalid Coupling option: {coupling}. "
-                f"Suuport options are: {coupling_map.keys()}"
-            )
+            raise ValueError(f"Invalid Coupling option: {coupling}. "
+                             f"Suuport options are: {coupling_map.keys()}")
 
         cmd_str = f"C{channel}:COUPLING {coupling_map[coupling]}"
         self.write_resource(cmd_str)
@@ -158,7 +151,8 @@ class Lecroy_WR8xxx(VisaResource):
             str: coupling mode
         """
 
-        coupling_map = {"D1M": "dc", "D50": "dc_50", "A1M": "ac", "gnd": "gnd"}
+        coupling_map = {'D1M': 'dc', 'D50': 'dc_50',
+                        'A1M': 'ac', 'gnd': 'gnd'}
 
         response = self.query_resource(f"C{int(channel)}:COUPLING?")
         return coupling_map[response.split()[-1]]
@@ -956,10 +950,11 @@ class Lecroy_WR8xxx(VisaResource):
             alias (str): text to assign to the specified channel
         """
 
-        q_str = f"""vbs 'app.acquisition.C{channel}.Alias = "{alias}" '"""
+        q_str = f"""vbs 'app.Acquisition.C{channel}.Alias = "{alias}" '"""
         self.write_resource(q_str)
 
-    def set_channel_label_position(self, channel: int, position: float = 0) -> None:
+    def set_channel_label_position(self, channel: int,
+                                   position: float = 0) -> None:
         """set_channel_label_position(channel, position)
 
         Args:
@@ -968,10 +963,8 @@ class Lecroy_WR8xxx(VisaResource):
             place the label. Units are in seconds. Defaults to 0.
         """
 
-        q_str = (
-            f"""vbs 'app.acquisition.C{channel}.LabelsPosition = """
-            + f""""{position}" '"""
-        )
+        q_str = (f"""vbs 'app.Acquisition.C{channel}.LabelsPosition = """ +
+                 f""""{position}" '""")
         self.write_resource(q_str)
 
     def set_channel_label_view(self, channel: int, view: bool = True) -> None:
@@ -987,10 +980,8 @@ class Lecroy_WR8xxx(VisaResource):
             Defaults to True 'ON'
         """
 
-        q_str = (
-            f"""vbs 'app.acquisition.C{channel}.LabelsPosition = """
-            + f""""{'ON' if view else 'OFF'}" '"""
-        )
+        q_str = (f"""vbs 'app.Acquisition.C{channel}.ViewLabels = """ +
+                 f""""{'ON' if view else 'OFF'}" '""")
         self.write_resource(q_str)
 
     def set_channel_findscale(self, channel: int) -> None:
@@ -1036,6 +1027,21 @@ class Lecroy_WR8xxx(VisaResource):
         """
         q_str = f"""vbs 'app.acquisition.C{channel}.View = {bool(mode)} '"""
         self.write_resource(q_str)
+
+    def get_channel_display(self, channel: int) -> None:
+        """
+        set_channel_display(channel)
+
+        Gets the visablity of the specified channel.
+
+        Args:
+            channel (int): channel number to configure.
+        Returns:
+            mode (bool): Whether or not the channel is visable on the screen
+        """
+        q_str = f"""vbs? 'return = app.Acquisition.C{channel}.View'"""
+        response = self.query_resource(q_str)
+        return ('-1' in response)
 
     def set_persistence_state(self, state: bool) -> None:
         self.write_resource(f'PERSIST {"ON" if state else "OFF"}')
