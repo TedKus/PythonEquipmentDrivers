@@ -2,6 +2,7 @@ from typing import Protocol
 
 from .Agilent_6030A import Agilent_6030A
 from .BKPrecision_9132B import BKPrecision_9132B
+from .BKPrecision_9140 import BKPrecision_9140
 from .CaliforniaInstruments_CSW5550 import CaliforniaInstruments_CSW5550
 from .Chroma_62000P import Chroma_62000P
 from .Elgar_1750A import Elgar_1750A
@@ -44,6 +45,7 @@ class VoltageSource(Protocol):
 
 __all__ = (
     "BKPrecision_9132B",
+    "BKPrecision_9140",
     "CaliforniaInstruments_CSW5550",
     "Chroma_62000P",
     "Keithley_2231A",
