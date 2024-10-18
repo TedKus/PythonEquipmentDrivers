@@ -2,7 +2,7 @@ from . import (daq, errors, functiongenerator, multimeter, networkanalyzer,
                oscilloscope, powermeter, sink, source, temperaturecontroller,
                utility)
 from .core import (GpibInterface, VisaResource, find_visa_resources,
-                   identify_visa_resources)
+                   identify_visa_resources, DummyDevice)
 from .resource_collections import (ResourceCollection, connect_resources,
                                    connect_equipment)
 
@@ -25,4 +25,5 @@ __all__ = [
     "networkanalyzer",
     "functiongenerator",
     "temperaturecontroller",
+    "DummyDevice"
 ]

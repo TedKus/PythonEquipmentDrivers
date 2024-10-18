@@ -1,4 +1,4 @@
-from typing import Iterable, List, Optional, Tuple
+from typing import Iterable, List, Optional, Tuple, Any, Dict
 
 import pyvisa
 
@@ -394,3 +394,26 @@ class GpibInterface:
         # TODO: consider adding getter to access private _resource
         visa_resources = [n._resource for n in trigger_devices]
         self._resource.group_execute_trigger(*visa_resources)
+
+
+
+class DummyDevice:
+    def __init__(self, address: str, mimic: str = None, **kwargs) -> None:
+        self.address = address
+        self.mimicked_device_name = None
+        self.state = {}
+        if mimic:
+            self.mimic(mimic)
+
+    def mimic(self, object: str, definition: str = None):
+        self.mimicked_device_name = object
+        self.mimicked_device_definition = definition
+
+    def __getattr__(self, name: str) -> Any:
+        def method(*args, **kwargs):
+            self.state[name] = (args, kwargs)
+            device_info = self.mimicked_device_name
+            if self.mimicked_device_definition:
+                device_info += f" from {self.mimicked_device_definition}"
+            return f"DummyDevice mimicking {device_info}.{name}(*{args}, **{kwargs})"
+        return method
