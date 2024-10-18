@@ -1,4 +1,5 @@
-from typing import Iterable, List, Optional, Tuple, Any, Dict
+import inspect
+from typing import Iterable, List, Optional, Tuple, Any, get_type_hints
 
 import pyvisa
 
@@ -396,24 +397,57 @@ class GpibInterface:
         self._resource.group_execute_trigger(*visa_resources)
 
 
-
 class DummyDevice:
     def __init__(self, address: str, mimic: str = None, **kwargs) -> None:
         self.address = address
         self.mimicked_device_name = None
+        self.mimicked_device_class = None
         self.state = {}
+        self.attributes = kwargs
         if mimic:
             self.mimic(mimic)
 
     def mimic(self, object: str, definition: str = None):
         self.mimicked_device_name = object
         self.mimicked_device_definition = definition
+        if definition:
+            module = __import__(definition, fromlist=[object])
+            self.mimicked_device_class = getattr(module, object)
+            # Initialize attributes from the mimicked class's __init__ method
+            sig = inspect.signature(self.mimicked_device_class.__init__)
+            for param in sig.parameters.values():
+                if param.name not in ['self', 'address'] and param.name not in self.attributes:
+                    if param.default is not param.empty:
+                        self.attributes[param.name] = param.default
+                    else:
+                        self.attributes[param.name] = None
 
     def __getattr__(self, name: str) -> Any:
+        if name in self.attributes:
+            return self.attributes[name]
+
         def method(*args, **kwargs):
             self.state[name] = (args, kwargs)
-            device_info = self.mimicked_device_name
-            if self.mimicked_device_definition:
-                device_info += f" from {self.mimicked_device_definition}"
-            return f"DummyDevice mimicking {device_info}.{name}(*{args}, **{kwargs})"
+            if self.mimicked_device_class and hasattr(self.mimicked_device_class, name):
+                original_method = getattr(self.mimicked_device_class, name)
+                return_type = get_type_hints(original_method).get('return')
+                if return_type:
+                    if return_type == bool:
+                        return False
+                    elif return_type == int:
+                        return 0
+                    elif return_type == float:
+                        return 0.0
+                    elif return_type == str:
+                        return ""
+                    elif hasattr(return_type, '__origin__') and return_type.__origin__ == list:
+                        return []
+                    # Add more type checks as needed
+            return None
         return method
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        if name in ['address', 'mimicked_device_name', 'mimicked_device_class', 'state', 'attributes']:
+            super().__setattr__(name, value)
+        else:
+            self.attributes[name] = value
