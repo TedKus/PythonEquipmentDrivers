@@ -4,6 +4,7 @@ from itertools import zip_longest
 from pathlib import Path
 from time import asctime, strftime
 from typing import Any, Dict, Iterable, List, Optional
+import warnings
 
 __all__ = ("log_to_csv", "dump_data", "dump_array_data", "create_test_log", "Logger")
 
@@ -73,6 +74,13 @@ def log_to_csv(file_path: Path, *data: Any, init: bool = False) -> None:
 
     with open(file_path_ext, "w" if init else "a") as f:
         print(*data, sep=",", file=f)
+
+
+def log_data(cfile_path: Path, *data: Any, init: bool = False) -> None:
+    warnings.warn("log_data is deprecated and may be removed in a "
+                  "future version. Use log_to_csv instead.",
+                  DeprecationWarning, stacklevel=2)
+    return log_to_csv(cfile_path, *data, init)
 
 
 def dump_data(file_path: Path, data: Iterable[Iterable[Any]]) -> None:
