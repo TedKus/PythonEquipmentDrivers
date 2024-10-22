@@ -4,15 +4,12 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Dict, Iterator, Tuple, Union
 from enum import Enum
-import warnings
-
 from pyvisa import VisaIOError
 
 from .errors import ResourceConnectionError, UnsupportedResourceError
 from .core import DummyDevice
 
-__all__ = ["ResourceCollection", "connect_resources", "initiaize_device",
-           "connect_equipment"]
+__all__ = ["ResourceCollection", "connect_resources", "initiaize_device"]
 
 
 def read_configuration(config_info: Union[str, Path, dict]) -> dict:
@@ -154,14 +151,6 @@ class DmmCollection(ResourceCollection):
                 resource.trigger()
             except (VisaIOError, AttributeError):
                 pass
-
-
-def connect_equipment(config: Union[str, Path, dict],
-                      **kwargs) -> ResourceCollection:
-    warnings.warn("connect_equipment is deprecated and may be removed in a "
-                  "future version. Use connect_resources instead.",
-                  DeprecationWarning, stacklevel=2)
-    return connect_resources(config, **kwargs)
 
 
 def connect_resources(config: Union[str, Path, dict],
