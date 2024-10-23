@@ -553,4 +553,11 @@ class HP_34401A(VisaResource):
         return self.measure_time
 
     def set_local(self, **kwargs) -> None:
+        """set_local()
+        this command is only available in rs232 mode
+        """
+        # Check if "ASRL" is in the address string
+        if "ASRL" not in self.address:
+            return  # Exit the method if not in RS232 mode
+
         self.write_resource("SYSTem:LOCal", **kwargs)
