@@ -1,6 +1,6 @@
 import inspect
 from typing import Iterable, List, Optional, Tuple, Any, get_type_hints
-
+import warnings
 import pyvisa
 
 from pythonequipmentdrivers.errors import ResourceConnectionError
@@ -358,6 +358,24 @@ class VisaResource:
 
         except pyvisa.VisaIOError as error:
             raise IOError("Error communicating with the resource\n", error)
+
+    def send_raw_scpi(self, command_str: str, **kwargs) -> None:
+        warnings.warn("send_raw_scpi is deprecated and may be removed in a "
+                      "future version. Use write_resource instead.",
+                      DeprecationWarning, stacklevel=2)
+        return self.write_resource(command_str, **kwargs)
+
+    def query_raw_scpi(self, query_str: str, **kwargs) -> str:
+        warnings.warn("query_raw_scpi is deprecated and may be removed in a "
+                      "future version. Use query_resource instead.",
+                      DeprecationWarning, stacklevel=2)
+        return self.query_resource(query_str, **kwargs)
+
+    def read_raw_scpi(self, **kwargs) -> str:
+        warnings.warn("read_raw_scpi is deprecated and may be removed in a "
+                      "future version. Use read_resource_raw instead.",
+                      DeprecationWarning, stacklevel=2)
+        return self.read_resource_raw(**kwargs)
 
 
 class GpibInterface:
