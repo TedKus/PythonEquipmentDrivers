@@ -44,7 +44,8 @@ class HP_34401A(VisaResource):
         "P": "PER",
     }
 
-    valid_ranges = {"AUTO", "MIN", "MAX", "DEF", "0.1", "1", "10", "100", "300"}
+    valid_ranges = {
+        "AUTO", "MIN", "MAX", "DEF", "0.1", "1", "10", "100", "300"}
 
     valid_cranges = {"AUTO", "MIN", "MAX", "DEF", "0.01", "0.1", "1", "3"}
 
@@ -143,7 +144,7 @@ class HP_34401A(VisaResource):
         get_error
 
         Returns:
-            [list]: last error in the buffer
+            str: last error in the buffer
         """
         response = self.query_resource("SYSTem:ERRor?", **kwargs)
         return self.resp_format(response, str)
@@ -200,7 +201,7 @@ class HP_34401A(VisaResource):
         trigger = trigger.upper()
         if trigger not in self.valid_trigger:
             raise ValueError("Invalid trigger option")
-        self.write_resource(f"TRIG:{self.valid_trigger[trigger]}")
+        self.write_resource(f"TRIG:SOUR {self.valid_trigger[trigger]}")
 
     def set_trigger_source(self, trigger: str = "IMMEDIATE", **kwargs) -> None:
         """
@@ -537,7 +538,7 @@ class HP_34401A(VisaResource):
         # that works out OK because data needs to be parsed from the first
         # character anyway, so this is not an error, but I don't like
         # that it isn't explicitly trying to find the correct character
-        response = list(map(resp_type, response[start + 1 : stop].split(",")))
+        response = list(map(resp_type, response[start + 1: stop].split(",")))
 
         if len(response) == 1:
             return response[0]
@@ -546,7 +547,8 @@ class HP_34401A(VisaResource):
     def set_measure_time(self, measure_time: float = None):
         if measure_time is None:
             self.measure_time = (
-                self.sample_count * self.nplc_default * (1 / self.line_frequency) + 0.01
+                self.sample_count *
+                self.nplc_default * (1 / self.line_frequency) + 0.01
             )
         else:
             self.measure_time = measure_time

@@ -3,7 +3,8 @@ from typing import Iterable, List, Optional, Tuple, Any, get_type_hints
 import warnings
 import pyvisa
 
-from pythonequipmentdrivers.errors import ResourceConnectionError
+from pythonequipmentdrivers.errors import (ResourceConnectionError,
+                                           CommunicationError)
 
 # Globals
 rm = pyvisa.ResourceManager()
@@ -112,8 +113,10 @@ class VisaResource:
 
     idn: str  # str: Description which uniquely identifies the instrument
 
-    def __init__(self, address: str, clear: bool = False, **kwargs) -> None:
+    def __init__(self, address: str, clear: bool = False,
+                 max_retries: int = 0, **kwargs) -> None:
         self.address = address
+        self.max_retries = max_retries
 
         default_settings = {
             "open_timeout": int(1000 * kwargs.get("open_timeout", 1.0)),  # ms
@@ -133,6 +136,18 @@ class VisaResource:
             self.clear()
 
         self.timeout = int(1000 * kwargs.get("timeout", 1.0))  # ms
+
+    def _do_with_retry(self, operation, *args, **kwargs):
+        """Helper method to execute operations with retry logic"""
+        attempts = 0
+        while attempts <= self.max_retries:
+            try:
+                return operation(*args, **kwargs)
+            except pyvisa.VisaIOError as visa_error:
+                if attempts == self.max_retries:
+                    raise CommunicationError(self.address,
+                                             self.idn) from visa_error
+                attempts += 1
 
     def clear_status(self, **kwargs) -> None:
         """
@@ -258,10 +273,7 @@ class VisaResource:
                 ascii characters
         """
 
-        try:
-            self._resource.write(message=message, **kwargs)
-        except pyvisa.VisaIOError as error:
-            raise IOError("Error communicating with the resource\n", error)
+        self._do_with_retry(self._resource.write, message, **kwargs)
 
     def write_resource_raw(self, message: bytes, **kwargs) -> None:
         """
@@ -273,10 +285,7 @@ class VisaResource:
             message (bytes): data to write to the connected resource
         """
 
-        try:
-            self._resource.write_raw(message=message, **kwargs)
-        except pyvisa.VisaIOError as error:
-            raise IOError("Error communicating with the resource\n", error)
+        self._do_with_retry(self._resource.write_raw, message, **kwargs)
 
     def query_resource(self, message: str, **kwargs) -> str:
         """
@@ -295,12 +304,9 @@ class VisaResource:
                 ascii characters
         """
 
-        try:
-            response: str = self._resource.query(message=message, **kwargs)
-            return response.strip()
-
-        except pyvisa.VisaIOError as error:
-            raise IOError("Error communicating with the resource\n", error)
+        response: str = self._do_with_retry(
+            self._resource.query, message, **kwargs)
+        return response.strip()
 
     def read_resource(self, **kwargs) -> str:
         """
@@ -313,12 +319,8 @@ class VisaResource:
                 ascii characters
         """
 
-        try:
-            response: str = self._resource.read(**kwargs)
-            return response.strip()
-
-        except pyvisa.VisaIOError as error:
-            raise IOError("Error communicating with the resource\n", error)
+        response: str = self._do_with_retry(self._resource.read, **kwargs)
+        return response.strip()
 
     def read_resource_raw(self, **kwargs) -> bytes:
         """
@@ -332,13 +334,7 @@ class VisaResource:
         Returns:
             bytes: data recieved from a connected resource
         """
-
-        try:
-            response = self._resource.read_raw(**kwargs)
-            return response
-
-        except pyvisa.VisaIOError as error:
-            raise IOError("Error communicating with the resource\n", error)
+        return self._do_with_retry(self._resource.read_raw, **kwargs)
 
     def read_resource_bytes(self, n: int, **kwargs) -> bytes:
         """
@@ -351,13 +347,7 @@ class VisaResource:
         Returns:
             bytes: data recieved from a connected resource
         """
-
-        try:
-            response = self._resource.read_bytes(count=n, **kwargs)
-            return response
-
-        except pyvisa.VisaIOError as error:
-            raise IOError("Error communicating with the resource\n", error)
+        return self._do_with_retry(self._resource.read_bytes, n, **kwargs)
 
     def send_raw_scpi(self, command_str: str, **kwargs) -> None:
         warnings.warn("send_raw_scpi is deprecated and may be removed in a "
