@@ -8,8 +8,35 @@ class BKPrecision_9140(Keithley_2231A):
 
     address : str, address of the connected power supply
 
-    object for accessing basic functionallity of the B&K Precision 9140 DC supply
+    object for accessing basic functionallity of the B&K Precision 9140 DC
+    supply
     """
+
+    def extract_integer(self, value: str) -> int:
+        """
+        Extracts the integer from a string that may contain non-numeric
+        prefixes.
+
+        Args:
+            value (str): The input string which may contain an integer or a
+            prefix.
+            Example usage:
+            values = ["0", "1", "2", "3", "CH1", "CH2", "CH3"]
+            extracted_integers = [extract_integer(v) for v in values]
+            print(extracted_integers)  # Output: [0, 1, 2, 3, 1, 2, 3]
+        Returns:
+            int: The extracted integer, or None if no valid integer is found.
+        """
+        # Initialize an empty string to collect numeric characters
+        numeric_part = ''
+
+        # Iterate through each character in the string
+        for char in value:
+            if char.isdigit():  # Check if the character is a digit
+                numeric_part += char  # Append digit to numeric_part
+
+        # Convert the collected numeric part to an integer if it's not empty
+        return int(numeric_part) if numeric_part else None
 
     def set_access_remote(self, mode: str) -> None:
         """
@@ -41,8 +68,8 @@ class BKPrecision_9140(Keithley_2231A):
 
         Selects the specified Channel to use for software control
         """
-
-        self.write_resource(f"INST:SEL {channel}")
+        if channel != self.channel:
+            self.write_resource(f"INST {channel}")
 
     def _update_channel(self, override_channel):
         """Handles updating the device channel setting"""
@@ -56,6 +83,7 @@ class BKPrecision_9140(Keithley_2231A):
                 "Channel number must be provided if it is not provided during"
                 + "initialization"
             )
+        self.channel = override_channel
         return
 
     def get_channel(self) -> int:
@@ -67,8 +95,12 @@ class BKPrecision_9140(Keithley_2231A):
         returns: int
         """
 
-        response = self.query_resource("INST:SEL?")
-        return int(response) + 1
+        try:
+            return int(self.extract_integer(
+                self.query_resource("INST:SEL?"))) + 1
+        except ValueError:
+            self.write_resource("INST:SEL?")
+            return int(self.read_resource())
 
     def set_state(self, state: bool, channel: int = None) -> None:
         """
@@ -168,9 +200,11 @@ class BKPrecision_9140(Keithley_2231A):
         """
         set_slewrate(current)
 
-        slewrate: float/int, slew rate setpoint in volts per second. Valid options are 0.001 to 3200.0 V/s.
+        slewrate: float/int, slew rate setpoint in volts per second.
+        Valid options are 0.001 to 3200.0 V/s.
 
-        channel: int=None, the index of the channel to set. Valid options are 1,2,3.
+        channel: int=None, the index of the channel to set.
+        Valid options are 1,2,3.
 
         sets the slew rate setting for the power supply in V/s
         """
@@ -186,7 +220,8 @@ class BKPrecision_9140(Keithley_2231A):
         """
         get_slewrate()
 
-        channel: int=None, the index of the channel to get. Valid options are 1,2,3.
+        channel: int=None, the index of the channel to get.
+        Valid options are 1,2,3.
 
         gets the slew rate setting for the power supply in V/s
 
@@ -197,13 +232,16 @@ class BKPrecision_9140(Keithley_2231A):
         response = self.query_resource("VOLT:SLOP?")
         return float(response)
 
-    def set_current_slewrate(self, slewrate: float, channel: int = None) -> None:
+    def set_current_slewrate(self, slewrate: float,
+                             channel: int = None) -> None:
         """
         set_current_slewrate(current)
 
-        slewrate: float/int, slew rate setpoint in Amps per second. Valid options are 1 to 800.0 A/s.
+        slewrate: float/int, slew rate setpoint in Amps per second.
+        Valid options are 1 to 800.0 A/s.
 
-        channel: int=None, the index of the channel to set. Valid options are 1,2,3.
+        channel: int=None, the index of the channel to set.
+        Valid options are 1,2,3.
 
         sets the current slew rate setting for the power supply in A/s
         """
@@ -219,7 +257,8 @@ class BKPrecision_9140(Keithley_2231A):
         """
         get_current_slewrate()
 
-        channel: int=None, the index of the channel to get. Valid options are 1,2,3.
+        channel: int=None, the index of the channel to get.
+        Valid options are 1,2,3.
 
         gets the current slew rate setting for the power supply in A/s
 
@@ -229,3 +268,21 @@ class BKPrecision_9140(Keithley_2231A):
         self._update_channel(channel)
         response = self.query_resource("VOLT:SLOP?")
         return float(response)
+
+    def measure_current(self, channel: int = None) -> float:
+        """
+        measure_current()
+
+        returns measurement of the output current of the specified channel in
+        Adc.
+
+        returns: float
+        """
+
+        self._update_channel(channel)
+        try:
+            return float(self.query_resource("MEAS:SCAL:CURRent:DC?"))
+        except ValueError:
+            self.write_resource("MEAS:SCAL:CURRent:DC?")
+            # sometimes the device needs a repeat due to channel selection?
+            return float(self.read_resource())
