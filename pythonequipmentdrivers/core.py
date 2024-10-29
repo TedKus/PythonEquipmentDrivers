@@ -121,6 +121,7 @@ class VisaResource:
         default_settings = {
             "open_timeout": int(1000 * kwargs.get("open_timeout", 1.0)),  # ms
             "timeout": int(1000 * kwargs.get("timeout", 1.0)),  # ms
+            "query_delay": int(0.001 * kwargs.get("query_delay", 0.0)),  # s
         }
 
         try:
