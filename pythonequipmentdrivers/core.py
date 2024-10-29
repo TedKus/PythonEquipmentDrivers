@@ -1,8 +1,10 @@
-from typing import Iterable, List, Optional, Tuple
-
+import inspect
+from typing import Iterable, List, Optional, Tuple, Any, get_type_hints
+import warnings
 import pyvisa
 
-from pythonequipmentdrivers.errors import ResourceConnectionError
+from pythonequipmentdrivers.errors import (ResourceConnectionError,
+                                           CommunicationError)
 
 # Globals
 rm = pyvisa.ResourceManager()
@@ -111,12 +113,15 @@ class VisaResource:
 
     idn: str  # str: Description which uniquely identifies the instrument
 
-    def __init__(self, address: str, clear: bool = False, **kwargs) -> None:
+    def __init__(self, address: str, clear: bool = False,
+                 max_retries: int = 0, **kwargs) -> None:
         self.address = address
+        self.max_retries = max_retries
 
         default_settings = {
             "open_timeout": int(1000 * kwargs.get("open_timeout", 1.0)),  # ms
             "timeout": int(1000 * kwargs.get("timeout", 1.0)),  # ms
+            "query_delay": int(0.001 * kwargs.get("query_delay", 0.0)),  # s
         }
 
         try:
@@ -132,6 +137,18 @@ class VisaResource:
             self.clear()
 
         self.timeout = int(1000 * kwargs.get("timeout", 1.0))  # ms
+
+    def _do_with_retry(self, operation, *args, **kwargs):
+        """Helper method to execute operations with retry logic"""
+        attempts = 0
+        while attempts <= self.max_retries:
+            try:
+                return operation(*args, **kwargs)
+            except pyvisa.VisaIOError as visa_error:
+                if attempts == self.max_retries:
+                    raise CommunicationError(self.address,
+                                             self.idn) from visa_error
+                attempts += 1
 
     def clear_status(self, **kwargs) -> None:
         """
@@ -203,7 +220,8 @@ class VisaResource:
         """
         try:
             # generic set local method for most GPIB, USB, TCIP
-            self._resource.control_ren(pyvisa.constants.RENLineOperation.address_gtl)
+            self._resource.control_ren(
+                pyvisa.constants.RENLineOperation.address_gtl)
         except (AttributeError, pyvisa.Error):
             # not a device that has control_ren method
             pass
@@ -256,10 +274,7 @@ class VisaResource:
                 ascii characters
         """
 
-        try:
-            self._resource.write(message=message, **kwargs)
-        except pyvisa.VisaIOError as error:
-            raise IOError("Error communicating with the resource\n", error)
+        self._do_with_retry(self._resource.write, message, **kwargs)
 
     def write_resource_raw(self, message: bytes, **kwargs) -> None:
         """
@@ -271,10 +286,7 @@ class VisaResource:
             message (bytes): data to write to the connected resource
         """
 
-        try:
-            self._resource.write_raw(message=message, **kwargs)
-        except pyvisa.VisaIOError as error:
-            raise IOError("Error communicating with the resource\n", error)
+        self._do_with_retry(self._resource.write_raw, message, **kwargs)
 
     def query_resource(self, message: str, **kwargs) -> str:
         """
@@ -293,12 +305,9 @@ class VisaResource:
                 ascii characters
         """
 
-        try:
-            response: str = self._resource.query(message=message, **kwargs)
-            return response.strip()
-
-        except pyvisa.VisaIOError as error:
-            raise IOError("Error communicating with the resource\n", error)
+        response: str = self._do_with_retry(
+            self._resource.query, message, **kwargs)
+        return response.strip()
 
     def read_resource(self, **kwargs) -> str:
         """
@@ -311,12 +320,8 @@ class VisaResource:
                 ascii characters
         """
 
-        try:
-            response: str = self._resource.read(**kwargs)
-            return response.strip()
-
-        except pyvisa.VisaIOError as error:
-            raise IOError("Error communicating with the resource\n", error)
+        response: str = self._do_with_retry(self._resource.read, **kwargs)
+        return response.strip()
 
     def read_resource_raw(self, **kwargs) -> bytes:
         """
@@ -330,13 +335,7 @@ class VisaResource:
         Returns:
             bytes: data recieved from a connected resource
         """
-
-        try:
-            response = self._resource.read_raw(**kwargs)
-            return response
-
-        except pyvisa.VisaIOError as error:
-            raise IOError("Error communicating with the resource\n", error)
+        return self._do_with_retry(self._resource.read_raw, **kwargs)
 
     def read_resource_bytes(self, n: int, **kwargs) -> bytes:
         """
@@ -349,13 +348,25 @@ class VisaResource:
         Returns:
             bytes: data recieved from a connected resource
         """
+        return self._do_with_retry(self._resource.read_bytes, n, **kwargs)
 
-        try:
-            response = self._resource.read_bytes(count=n, **kwargs)
-            return response
+    def send_raw_scpi(self, command_str: str, **kwargs) -> None:
+        warnings.warn("send_raw_scpi is deprecated and may be removed in a "
+                      "future version. Use write_resource instead.",
+                      DeprecationWarning, stacklevel=2)
+        return self.write_resource(command_str, **kwargs)
 
-        except pyvisa.VisaIOError as error:
-            raise IOError("Error communicating with the resource\n", error)
+    def query_raw_scpi(self, query_str: str, **kwargs) -> str:
+        warnings.warn("query_raw_scpi is deprecated and may be removed in a "
+                      "future version. Use query_resource instead.",
+                      DeprecationWarning, stacklevel=2)
+        return self.query_resource(query_str, **kwargs)
+
+    def read_raw_scpi(self, **kwargs) -> str:
+        warnings.warn("read_raw_scpi is deprecated and may be removed in a "
+                      "future version. Use read_resource_raw instead.",
+                      DeprecationWarning, stacklevel=2)
+        return self.read_resource_raw(**kwargs)
 
 
 class GpibInterface:
@@ -394,3 +405,67 @@ class GpibInterface:
         # TODO: consider adding getter to access private _resource
         visa_resources = [n._resource for n in trigger_devices]
         self._resource.group_execute_trigger(*visa_resources)
+
+
+class DummyDevice:
+    def __init__(self, address: str, mimic: str = None, **kwargs) -> None:
+        self.address = address
+        self.mimicked_device_name = None
+        self.mimicked_device_class = None
+        self.state = {}
+        self.attributes = kwargs
+        if mimic:
+            self.mimic(mimic)
+
+    def mimic(self, object: str, definition: str = None):
+        self.mimicked_device_name = object
+        self.mimicked_device_definition = definition
+        if definition:
+            module = __import__(definition, fromlist=[object])
+            self.mimicked_device_class = getattr(module, object)
+            # Initialize attributes from the mimicked class's __init__ method
+            sig = inspect.signature(self.mimicked_device_class.__init__)
+            for param in sig.parameters.values():
+                if param.name not in ['self', 'address'] and \
+                   param.name not in self.attributes:
+                    if param.default is not param.empty:
+                        self.attributes[param.name] = param.default
+                    else:
+                        self.attributes[param.name] = None
+
+    def __getattr__(self, name: str) -> Any:
+        if name in self.attributes:
+            return self.attributes[name]
+
+        def method(*args, **kwargs):
+            self.state[name] = (args, kwargs)
+            if self.mimicked_device_class and hasattr(
+                                               self.mimicked_device_class,
+                                               name):
+                original_method = getattr(self.mimicked_device_class, name)
+                return_type = get_type_hints(original_method).get('return')
+                if return_type:
+                    if return_type == bool:
+                        return False
+                    elif return_type == int:
+                        return 0
+                    elif return_type == float:
+                        return 0.0
+                    elif return_type == str:
+                        return ""
+                    elif (hasattr(return_type, '__origin__') and
+                          return_type.__origin__ == list):
+                        return []
+                    # Add more type checks as needed
+            return None
+        return method
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        if name in ['address',
+                    'mimicked_device_name',
+                    'mimicked_device_class',
+                    'state',
+                    'attributes']:
+            super().__setattr__(name, value)
+        else:
+            self.attributes[name] = value

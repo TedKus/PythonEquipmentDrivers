@@ -1,5 +1,5 @@
 from typing import Any, Dict, List, Tuple
-
+import warnings
 from ..core import VisaResource
 
 
@@ -322,7 +322,8 @@ class Chroma_62000P(VisaResource):
         valid_program_types = {"STEP", "LIST", "CP"}
 
         if program_type.upper() not in valid_program_types:
-            raise ValueError("Invalid program type" f", use: {valid_program_types}")
+            raise ValueError("Invalid program type"
+                             f", use: {valid_program_types}")
 
         self.write_resource(f"PROG:MODE {program_type}")
 
@@ -453,7 +454,8 @@ class Chroma_62000P(VisaResource):
             if isinstance(curr_slew, str):
                 if curr_slew.upper() != "INF":
                     raise ValueError(
-                        "Current Slew-rate must be a float or" 'the string "INF"'
+                        "Current Slew-rate must be a float or "
+                        'the string "INF"'
                     )
                 else:
                     cmds.append("PROG:SEQ:CURR:SLEWINF")
@@ -515,7 +517,7 @@ class Chroma_62000P(VisaResource):
             seq["type"] = valid_sequence_types[int(type_)]  # index into a list
 
             seq["voltage"] = float(volt)
-            seq["voltage_slew"] = float(volt_sr) * 1e3  # convert to V/s for user
+            seq["voltage_slew"] = float(volt_sr) * 1e3  # convert to V/s
 
             seq["current"] = float(curr)
             if "INF" in curr_sr:
@@ -610,3 +612,14 @@ class Chroma_62000P(VisaResource):
         error_message = error_status[1].replace('"', "")
 
         return (error_code, error_message)
+
+
+class Chroma_62012P(Chroma_62000P):
+    """A deprecated class that inherits from Chroma_62000P."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        warnings.warn("Chroma_62012P is deprecated and will be removed "
+                      "in a future version. "
+                      "Use Chroma_62000P instead.",
+                      DeprecationWarning, stacklevel=2)

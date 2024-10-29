@@ -4,14 +4,12 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Dict, Iterator, Tuple, Union
 from enum import Enum
-import warnings
-
 from pyvisa import VisaIOError
 
 from .errors import ResourceConnectionError, UnsupportedResourceError
+from .core import DummyDevice
 
-__all__ = ["ResourceCollection", "connect_resources", "initiaize_device",
-           "connect_equipment"]
+__all__ = ["ResourceCollection", "connect_resources", "initiaize_device"]
 
 
 def read_configuration(config_info: Union[str, Path, dict]) -> dict:
@@ -86,6 +84,18 @@ class ResourceCollection(SimpleNamespace):
             except (VisaIOError, AttributeError):
                 pass
 
+    def clear_status(self) -> None:
+        """
+        clear_status()
+
+        Attempt to clear each resource in the collection.
+        """
+        for resource in self:
+            try:
+                resource.clear_status()
+            except (VisaIOError, AttributeError):
+                pass
+
 
 class DmmCollection(ResourceCollection):
     """
@@ -153,14 +163,6 @@ class DmmCollection(ResourceCollection):
                 resource.trigger()
             except (VisaIOError, AttributeError):
                 pass
-
-
-def connect_equipment(config: Union[str, Path, dict],
-                      **kwargs) -> ResourceCollection:
-    warnings.warn("connect_equipment is deprecated and may be removed in a "
-                  "future version. Use connect_resources instead.",
-                  DeprecationWarning, stacklevel=2)
-    return connect_resources(config, **kwargs)
 
 
 def connect_resources(config: Union[str, Path, dict],
@@ -315,6 +317,9 @@ def connect_resources(config: Union[str, Path, dict],
             if kwargs.get("init", False) and (init_sequence):
                 # get the instance in question
                 resource_instance = getattr(resources, name)
+                if kwargs.get("clear", False):
+                    print(f"[CLEAR] {name}")
+                    resource_instance.clear_status()
 
                 initiaize_device(resource_instance, init_sequence)
                 if kwargs.get("verbose", True):
@@ -326,7 +331,7 @@ def connect_resources(config: Union[str, Path, dict],
                 print(f"[FAILED CONNECTION] {name}")
 
             if object_mask:  # failed resource connection is required
-                raise ResourceConnectionError(error)
+                raise ResourceConnectionError(error) from error
 
         except (ModuleNotFoundError, AttributeError) as error:
 
@@ -406,7 +411,7 @@ def initiaize_device(instance, sequence) -> None:
     error_msg_template = "\tError with initialization command {}:\t{}"
 
     for method_name, method_kwargs in sequence:
-        if method_name in valid_cmds:
+        if method_name in valid_cmds or isinstance(instance, DummyDevice):
             try:
                 func = getattr(instance, method_name)
                 # Convert string values to Enum values where possible
@@ -417,7 +422,6 @@ def initiaize_device(instance, sequence) -> None:
                     for key, value in method_kwargs.items()
                 }
                 func(**converted_kwargs)
-
             except TypeError as error:  # invalid kwargs
                 print(error_msg_template.format(method_name, error))
             except ValueError as error:  # invalid Enum value
