@@ -3,10 +3,11 @@ from importlib import import_module
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Dict, Iterator, Tuple, Union
-
+from enum import Enum
 from pyvisa import VisaIOError
 
 from .errors import ResourceConnectionError, UnsupportedResourceError
+from .core import DummyDevice
 
 __all__ = ["ResourceCollection", "connect_resources", "initiaize_device"]
 
@@ -83,6 +84,18 @@ class ResourceCollection(SimpleNamespace):
             except (VisaIOError, AttributeError):
                 pass
 
+    def clear_status(self) -> None:
+        """
+        clear_status()
+
+        Attempt to clear each resource in the collection.
+        """
+        for resource in self:
+            try:
+                resource.clear_status()
+            except (VisaIOError, AttributeError):
+                pass
+
 
 class DmmCollection(ResourceCollection):
     """
@@ -122,9 +135,8 @@ class DmmCollection(ResourceCollection):
             try:
                 measurements[new_name] = resource.fetch_data()
             except AttributeError as exc:
-                raise AttributeError(
-                    "All multimeter instances must have a " '"fetch_data" method'
-                ) from exc
+                raise AttributeError("All multimeter instances must have a "
+                                     '"fetch_data" method') from exc
 
         return measurements
 
@@ -153,10 +165,8 @@ class DmmCollection(ResourceCollection):
                 pass
 
 
-# Update expected/assumed format of json file
-
-
-def connect_resources(config: Union[str, Path, dict], **kwargs) -> ResourceCollection:
+def connect_resources(config: Union[str, Path, dict],
+                      **kwargs) -> ResourceCollection:
     """
     connect_resources(config, **kwargs)
 
@@ -307,6 +317,9 @@ def connect_resources(config: Union[str, Path, dict], **kwargs) -> ResourceColle
             if kwargs.get("init", False) and (init_sequence):
                 # get the instance in question
                 resource_instance = getattr(resources, name)
+                if kwargs.get("clear", False):
+                    print(f"[CLEAR] {name}")
+                    resource_instance.clear_status()
 
                 initiaize_device(resource_instance, init_sequence)
                 if kwargs.get("verbose", True):
@@ -318,7 +331,7 @@ def connect_resources(config: Union[str, Path, dict], **kwargs) -> ResourceColle
                 print(f"[FAILED CONNECTION] {name}")
 
             if object_mask:  # failed resource connection is required
-                raise ResourceConnectionError(error)
+                raise ResourceConnectionError(error) from error
 
         except (ModuleNotFoundError, AttributeError) as error:
 
@@ -351,11 +364,27 @@ def get_callable_methods(instance) -> Tuple:
 
     # get methods that are callable (will not include sub-classes)
     methods = instance.__dir__()
-    cmds = filter(lambda method: (callable(getattr(instance, method))), methods)
+    cmds = filter(lambda method: (callable(getattr(instance, method))),
+                  methods)
 
     # filter out ignore dunders
     cmds = filter(lambda func_name: ("__" not in func_name), cmds)
     return tuple(cmds)
+
+
+def convert_to_enum(instance, value):
+    """
+    Attempt to convert a string value to an Enum value if a matching Enum
+    exists in the instance.
+    """
+    for attr_name in dir(instance):
+        attr = getattr(instance, attr_name)
+        if isinstance(attr, type) and issubclass(attr, Enum):
+            try:
+                return attr[value.upper()]
+            except KeyError:
+                pass
+    return value
 
 
 def initiaize_device(instance, sequence) -> None:
@@ -382,12 +411,20 @@ def initiaize_device(instance, sequence) -> None:
     error_msg_template = "\tError with initialization command {}:\t{}"
 
     for method_name, method_kwargs in sequence:
-        if method_name in valid_cmds:
+        if method_name in valid_cmds or isinstance(instance, DummyDevice):
             try:
                 func = getattr(instance, method_name)
-                func(**method_kwargs)
-
+                # Convert string values to Enum values where possible
+                converted_kwargs = {
+                    key: convert_to_enum(instance,
+                                         value) if isinstance(value,
+                                                              str) else value
+                    for key, value in method_kwargs.items()
+                }
+                func(**converted_kwargs)
             except TypeError as error:  # invalid kwargs
+                print(error_msg_template.format(method_name, error))
+            except ValueError as error:  # invalid Enum value
                 print(error_msg_template.format(method_name, error))
         else:
             print(error_msg_template.format(method_name, '"unknown method"'))

@@ -163,7 +163,8 @@ class Keithley_2231A(VisaResource):
 
         voltage: float or int, amplitude to set output to in Vdc
 
-        channel: int=None, the index of the channel to set. Valid options are 1,2,3.
+        channel: int=None, the index of the channel to set.
+        Valid options are 1,2,3.
 
         set the output voltage setpoint of channel "channel" specified by
         "voltage"
@@ -176,7 +177,8 @@ class Keithley_2231A(VisaResource):
         """
         get_voltage()
 
-        channel: int=None, the index of the channel to set. Valid options are 1,2,3.
+        channel: int=None, the index of the channel to set.
+        Valid options are 1,2,3.
 
         gets the output voltage setpoint in Vdc
 
@@ -193,7 +195,8 @@ class Keithley_2231A(VisaResource):
 
         current: float/int, current limit setpoint in Adc
 
-        channel: int=None, the index of the channel to set. Valid options are 1,2,3.
+        channel: int=None, the index of the channel to set.
+        Valid options are 1,2,3.
 
         sets the current limit setting for the power supply in Adc
         """
@@ -205,7 +208,8 @@ class Keithley_2231A(VisaResource):
         """
         get_current()
 
-        channel: int=None, the index of the channel to set. Valid options are 1,2,3.
+        channel: int=None, the index of the channel to set.
+        Valid options are 1,2,3.
 
         gets the current limit setting for the power supply in Adc
 
@@ -241,5 +245,9 @@ class Keithley_2231A(VisaResource):
         """
 
         self._update_channel(channel)
-        response = self.query_resource("MEAS:CURR?")
-        return float(response)
+        try:
+            response = float(self.query_resource("MEAS:CURR?"))
+        except ValueError:
+            # sometimes the device needs a repeat due to channel selection?
+            response = float(self.query_resource("MEAS:CURR?"))
+        return response

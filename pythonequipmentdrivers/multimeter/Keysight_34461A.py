@@ -93,3 +93,10 @@ class Keysight_34461A(HP_34401A):
 
     def clear_label_text(self) -> None:
         self.set_label_text("")
+
+    def set_local(self, **kwargs) -> None:
+        """set_local()
+        Sets the instrument state to local, clears the Remote display
+        annunciator, and enables front-panel operation.
+        """
+        self.write_resource("SYSTem:LOCal", **kwargs)
