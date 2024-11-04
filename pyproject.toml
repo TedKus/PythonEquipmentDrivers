@@ -4,9 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pythonequipmentdrivers"
-version = "2.4.0"
+version = "2.4.1"
 authors = [
   { name="Anna Giasson", email="AnnaGraceGiasson@GMail.com" },
+  { name="Chris Griffin", email="" },
+  { name="Ted Kus", email="ted.kus@GMail.com" },
 ]
 description = "A library of software drivers to interface with various pieces of test instrumentation"
 readme = "README.md"
