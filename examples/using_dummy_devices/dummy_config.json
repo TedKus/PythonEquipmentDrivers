@@ -1,6 +1,6 @@
 {
-    "dummy_source": {
-        "object": "DummyDevice",
+    "virtual_source": {
+        "object": "VirtualDevice",
         "definition": "pythonequipmentdrivers.core",
         "address": "GPIB0::99::INSTR",
         "init": [
@@ -12,8 +12,8 @@
             ["off", {}]
         ]
     },
-    "dummy_sink": {
-        "object": "DummyDevice",
+    "virtual_sink": {
+        "object": "VirtualDevice",
         "definition": "pythonequipmentdrivers.core",
         "address": "GPIB0::98::INSTR",
         "init": [
@@ -24,8 +24,8 @@
             ["set_mode", {"mode": "CC"}]
         ]
     },
-    "dummy_multimeter": {
-        "object": "DummyDevice",
+    "virtual_multimeter": {
+        "object": "VirtualDevice",
         "definition": "pythonequipmentdrivers.core",
         "address": "GPIB0::97::INSTR",
         "init": [
@@ -36,8 +36,8 @@
             ["set_mode", {"mode": "VDC"}]
         ]
     },
-    "dummy_oscilloscope": {
-        "object": "DummyDevice",
+    "Virtual_oscilloscope": {
+        "object": "VirtualDevice",
         "definition": "pythonequipmentdrivers.core",
         "address": "GPIB0::96::INSTR",
         "init": [
@@ -47,8 +47,8 @@
             }]
         ]
     },
-    "dummy_powermeter": {
-        "object": "DummyDevice",
+    "Virtual_powermeter": {
+        "object": "VirtualDevice",
         "definition": "pythonequipmentdrivers.core",
         "address": "GPIB0::95::INSTR",
         "init": [
@@ -58,8 +58,8 @@
             }]
         ]
     },
-    "dummy_functiongenerator": {
-        "object": "DummyDevice",
+    "Virtual_functiongenerator": {
+        "object": "VirtualDevice",
         "definition": "pythonequipmentdrivers.core",
         "address": "GPIB0::94::INSTR",
         "init": [
@@ -69,8 +69,8 @@
             }]
         ]
     },
-    "dummy_networkanalyzer": {
-        "object": "DummyDevice",
+    "Virtual_networkanalyzer": {
+        "object": "VirtualDevice",
         "definition": "pythonequipmentdrivers.core",
         "address": "GPIB0::93::INSTR",
         "init": [

@@ -407,7 +407,7 @@ class GpibInterface:
         self._resource.group_execute_trigger(*visa_resources)
 
 
-class DummyDevice:
+class VirtualDevice:
     def __init__(self, address: str, mimic: str = None, **kwargs) -> None:
         self.address = address
         self.mimicked_device_name = None
