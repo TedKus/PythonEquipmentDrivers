@@ -7,7 +7,7 @@ from enum import Enum
 from pyvisa import VisaIOError
 
 from .errors import ResourceConnectionError, UnsupportedResourceError
-from .core import DummyDevice
+from .core import VirtualDevice
 
 __all__ = ["ResourceCollection", "connect_resources", "initiaize_device"]
 
@@ -411,7 +411,7 @@ def initiaize_device(instance, sequence) -> None:
     error_msg_template = "\tError with initialization command {}:\t{}"
 
     for method_name, method_kwargs in sequence:
-        if method_name in valid_cmds or isinstance(instance, DummyDevice):
+        if method_name in valid_cmds or isinstance(instance, VirtualDevice):
             try:
                 func = getattr(instance, method_name)
                 # Convert string values to Enum values where possible
