@@ -1,0 +1,83 @@
+{
+    "dummy_source": {
+        "object": "DummyDevice",
+        "definition": "pythonequipmentdrivers.core",
+        "address": "GPIB0::99::INSTR",
+        "init": [
+            ["mimic", {
+                "object": "Keithley_2231A",
+                "definition": "pythonequipmentdrivers.source.Keithley_2231A"
+            }],
+            ["set_voltage", {"voltage": 0}],
+            ["off", {}]
+        ]
+    },
+    "dummy_sink": {
+        "object": "DummyDevice",
+        "definition": "pythonequipmentdrivers.core",
+        "address": "GPIB0::98::INSTR",
+        "init": [
+            ["mimic", {
+                "object": "Chroma_63206A",
+                "definition": "pythonequipmentdrivers.sink.Chroma_63206A"
+            }],
+            ["set_mode", {"mode": "CC"}]
+        ]
+    },
+    "dummy_multimeter": {
+        "object": "DummyDevice",
+        "definition": "pythonequipmentdrivers.core",
+        "address": "GPIB0::97::INSTR",
+        "init": [
+            ["mimic", {
+                "object": "HP_34401A",
+                "definition": "pythonequipmentdrivers.multimeter.HP_34401A"
+            }],
+            ["set_mode", {"mode": "VDC"}]
+        ]
+    },
+    "dummy_oscilloscope": {
+        "object": "DummyDevice",
+        "definition": "pythonequipmentdrivers.core",
+        "address": "GPIB0::96::INSTR",
+        "init": [
+            ["mimic", {
+                "object": "Tektronix_DPO4xxx",
+                "definition": "pythonequipmentdrivers.oscilloscope.Tektronix_DPO4xxx"
+            }]
+        ]
+    },
+    "dummy_powermeter": {
+        "object": "DummyDevice",
+        "definition": "pythonequipmentdrivers.core",
+        "address": "GPIB0::95::INSTR",
+        "init": [
+            ["mimic", {
+                "object": "Yokogawa_760203",
+                "definition": "pythonequipmentdrivers.powermeter.Yokogawa_760203"
+            }]
+        ]
+    },
+    "dummy_functiongenerator": {
+        "object": "DummyDevice",
+        "definition": "pythonequipmentdrivers.core",
+        "address": "GPIB0::94::INSTR",
+        "init": [
+            ["mimic", {
+                "object": "Keysight_33500B",
+                "definition": "pythonequipmentdrivers.functiongenerator.Keysight_33500B"
+            }]
+        ]
+    },
+    "dummy_networkanalyzer": {
+        "object": "DummyDevice",
+        "definition": "pythonequipmentdrivers.core",
+        "address": "GPIB0::93::INSTR",
+        "init": [
+            ["mimic", {
+                "object": "Bode100",
+                "definition": "pythonequipmentdrivers.networkanalyzer.Bode100"
+            }]
+        ]
+    }
+}
