@@ -1,0 +1,29 @@
+{
+    "virtual_source": {
+        "object": "Keithley_2231A",
+        "definition": "pythonequipmentdrivers.source",
+        "address": "VirtualDevice",
+        "init": [
+            ["set_voltage", {"voltage": 0}],
+            ["off", {}],
+            ["set_current", {"current": 0}]
+        ]
+    },
+    "virtual_sink": {
+        "object": "Chroma_63206A",
+        "definition": "pythonequipmentdrivers.sink",
+        "address": "VirtualDevice",
+        "init": [
+            ["set_current", {"current": 0}],
+            ["set_mode", {"mode": "CC"}]
+        ]
+    },
+    "virtual_multimeter": {
+        "object": "Keithley_2700",
+        "definition": "pythonequipmentdrivers.multimeter",
+        "address": "VirtualDevice",
+        "init": [
+            ["set_mode", {"mode": "VDC"}]
+        ]
+    }
+}
