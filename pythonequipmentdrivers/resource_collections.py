@@ -293,19 +293,28 @@ def connect_resources(config: Union[str, Path, dict],
     resources = ResourceCollection()
     dmms = {}
     for name, meta_info in collection_config.items():
-
         try:
-            # get object to instantate from it's source module
-            module_name = meta_info.pop("definition")
-            Module = import_module(module_name)
-            Resource = getattr(Module, meta_info.pop("object"))
+            # Get module_name before potential pop operations
+            module_name = meta_info.get("definition", "")
 
-            # special keyword for resource initialization, not passed as kwarg
-            init_sequence = meta_info.pop("init", [])
+            # Handle virtual devices based on address
+            if meta_info.get("address", "").lower() == "virtualdevice":
+                resource = VirtualDevice(**meta_info)
+                init_sequence = meta_info.pop("init", [])
+            else:
+                # get object to instantiate from it's source module
+                module_name = meta_info.pop("definition")
+                Module = import_module(module_name)
+                Resource = getattr(Module, meta_info.pop("object"))
 
-            # create instance of Resource called 'name', any remaining items in
-            # meta_info will be passed as kwargs
-            resource = Resource(**meta_info)
+                # special keyword for resource initialization, not passed
+                # as kwarg
+                init_sequence = meta_info.pop("init", [])
+
+                # create instance of Resource called 'name', any remaining
+                # items in meta_info will be passed as kwargs
+                resource = Resource(**meta_info)
+
             setattr(resources, name, resource)
 
             if "multimeter" in module_name:

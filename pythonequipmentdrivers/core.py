@@ -408,64 +408,121 @@ class GpibInterface:
 
 
 class VirtualDevice:
-    def __init__(self, address: str, mimic: str = None, **kwargs) -> None:
-        self.address = address
-        self.mimicked_device_name = None
-        self.mimicked_device_class = None
-        self.state = {}
-        self.attributes = kwargs
-        if mimic:
-            self.mimic(mimic)
+    def __init__(self, address: str = "virtualdevice", definition: str = None,
+                 object: str = None, **kwargs) -> None:
+        """Initialize a virtual device that mimics a real instrument.
 
-    def mimic(self, object: str, definition: str = None):
-        self.mimicked_device_name = object
-        self.mimicked_device_definition = definition
-        if definition:
-            module = __import__(definition, fromlist=[object])
-            self.mimicked_device_class = getattr(module, object)
-            # Initialize attributes from the mimicked class's __init__ method
-            sig = inspect.signature(self.mimicked_device_class.__init__)
-            for param in sig.parameters.values():
-                if param.name not in ['self', 'address'] and \
-                   param.name not in self.attributes:
-                    if param.default is not param.empty:
-                        self.attributes[param.name] = param.default
-                    else:
-                        self.attributes[param.name] = None
+        Args:
+            address (str): Virtual address for the device
+            definition (str): Import path for the device class module
+            object (str): Name of the device class to virtualize
+            **kwargs: Additional attributes to set on the virtual device
+        """
+        self.address = address
+        self.state = {}  # Stores method call history
+        self.values = {}  # Stores current device state/settings
+        self.attributes = kwargs
+        self.device_class = None
+        self.methods = {}  # Stores method signatures and return types
+
+        if definition and object:
+            try:
+                # Import and analyze the device class
+                module = __import__(definition, fromlist=[object])
+                self.device_class = getattr(module, object)
+                self._analyze_device_class()
+            except (ImportError, AttributeError) as e:
+                warnings.warn(f"Failed to load device class {object} "
+                              f"from {definition}: {e}")
+
+    def _analyze_device_class(self):
+        """Analyze device class methods and create virtual equivalents"""
+        for name, method in inspect.getmembers(self.device_class, inspect.isfunction):
+            if name.startswith('_'):
+                continue
+
+            # Get method signature and return type
+            sig = inspect.signature(method)
+            return_type = get_type_hints(method).get('return')
+
+            # Store method info
+            self.methods[name] = {
+                'signature': sig,
+                'return_type': return_type,
+                'default_value': self._get_default_value(return_type)
+            }
+
+            # Initialize state values for measurement/getter methods
+            if name.startswith(('measure_', 'get_')):
+                self.values[name] = self._get_default_value(return_type)
+
+    def _get_default_value(self, return_type):
+        """Get appropriate default value based on return type"""
+        if return_type is None:
+            return None
+        elif return_type is bool:
+            return False
+        elif return_type is int:
+            return 0
+        elif return_type is float:
+            return 0.0
+        elif return_type is str:
+            return ""
+        elif (hasattr(return_type, '__origin__') and
+              return_type.__origin__ is list):
+            return []
+        return None
+
+    def _update_state(self, name: str, *args, **kwargs):
+        """Update device state based on method calls"""
+        # Record method call
+        self.state[name] = (args, kwargs)
+
+        # Update values based on method type
+        if name.startswith('set_'):
+            # Extract value from set_* methods
+            get_name = f"get_{name[4:]}"  # set_voltage -> get_voltage
+            measure_name = f"measure_{name[4:]}"  # set_voltage -> measure_voltage
+
+            # Get the value being set
+            value = next(iter(kwargs.values())) if kwargs else args[0]
+
+            # Update corresponding get/measure methods
+            if get_name in self.methods:
+                self.values[get_name] = value
+            if measure_name in self.methods:
+                self.values[measure_name] = value
 
     def __getattr__(self, name: str) -> Any:
+        """Handle method calls and attribute access"""
         if name in self.attributes:
             return self.attributes[name]
 
-        def method(*args, **kwargs):
-            self.state[name] = (args, kwargs)
-            if self.mimicked_device_class and hasattr(
-                                               self.mimicked_device_class,
-                                               name):
-                original_method = getattr(self.mimicked_device_class, name)
-                return_type = get_type_hints(original_method).get('return')
-                if return_type:
-                    if return_type == bool:
-                        return False
-                    elif return_type == int:
-                        return 0
-                    elif return_type == float:
-                        return 0.0
-                    elif return_type == str:
-                        return ""
-                    elif (hasattr(return_type, '__origin__') and
-                          return_type.__origin__ == list):
-                        return []
-                    # Add more type checks as needed
-            return None
-        return method
+        if name in self.methods:
+            def method(*args, **kwargs):
+                self._update_state(name, *args, **kwargs)
 
-    def __setattr__(self, name: str, value: Any) -> None:
-        if name in ['address',
-                    'mimicked_device_name',
-                    'mimicked_device_class',
-                    'state',
-                    'attributes']:
-            super().__setattr__(name, value)
-        else:
-            self.attributes[name] = value
+                # For measurement/getter methods, return stored value
+                if name in self.values:
+                    return self.values[name]
+
+                # Otherwise return default for return type
+                return self.methods[name]['default_value']
+            return method
+
+        # Default method for unknown calls
+        def default_method(*args, **kwargs):
+            self.state[name] = (args, kwargs)
+            return None
+        return default_method
+
+    def get_call_history(self, method_name: str = None) -> dict:
+        """Get history of method calls"""
+        if method_name:
+            return self.state.get(method_name)
+        return self.state
+
+    def set_measurement_value(self, method_name: str, value: Any):
+        """Set a value to be returned by a measurement method"""
+        if method_name in self.methods:
+            self.values[method_name] = value
