@@ -526,3 +526,6 @@ class VirtualDevice:
         """Set a value to be returned by a measurement method"""
         if method_name in self.methods:
             self.values[method_name] = value
+
+    def set_local(self):
+        pass
