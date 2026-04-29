@@ -369,6 +369,101 @@ class VisaResource:
         return self.read_resource_raw(**kwargs)
 
 
+class BareVisaResource:
+    """
+    BareVisaResource
+
+    Base class for instruments that do not comply with standard SCPI commands
+    (no *IDN? support). The connection can be used to read/write data to the
+    resource, including sending commands and querying information.
+
+    Arg:
+        address (str): Visa resource address to connect to
+
+    Kwargs:
+        open_timeout (float, optional): The time to wait (in seconds) when
+            trying to connect to a resource before this operation returns an
+            error; resolves to the nearest millisecond. Defaults to 1.0.
+        timeout (float, optional): Timeout (in seconds) for I/O operations
+            with the connected resource; resolves to the nearest millisecond.
+            Defaults to 1.0.
+    """
+
+    def __init__(self, address: str, **kwargs) -> None:
+        self.address = address
+
+        default_settings = {
+            "open_timeout": int(1000 * kwargs.get("open_timeout", 1.0)),  # ms
+            "timeout": int(1000 * kwargs.get("timeout", 1.0)),  # ms
+        }
+
+        try:
+            self._resource = rm.open_resource(self.address, **default_settings)
+        except pyvisa.Error as error:
+            raise ResourceConnectionError(
+                f"Could not connect to resource at: {address}", error
+            )
+
+    def __del__(self) -> None:
+        if hasattr(self, "_resource"):
+            self._resource.close()
+
+    @property
+    def timeout(self) -> int:
+        """
+        timeout
+
+        Returns:
+            int: Timeout (in milliseconds) for I/O operations with the
+                connected resource.
+        """
+        return self._resource.timeout
+
+    @timeout.setter
+    def timeout(self, timeout: int) -> None:
+        """
+        timeout
+
+        Args:
+            timeout (int): timeout (in milliseconds) for I/O operations with
+                the connected resource.
+        """
+        self._resource.timeout = int(timeout)
+
+    def write_resource(self, message: str, **kwargs) -> None:
+        """
+        write_resource(message, **kwargs)
+
+        Writes data to the connected resource.
+
+        Args:
+            message (str): data to write to the connected resource, string of
+                ascii characters
+        """
+        try:
+            self._resource.write(message=message, **kwargs)
+        except pyvisa.VisaIOError as error:
+            raise IOError("Error communicating with the resource\n", error)
+
+    def query_resource(self, message: str, **kwargs) -> str:
+        """
+        query_resource(message, **kwargs)
+
+        Writes data to the connected resource before reading data back from it.
+
+        Args:
+            message (str): data to write to the connected resource before
+                issuing a read, string of ascii characters
+        Returns:
+            str: data received from a connected resource
+        """
+        try:
+            response: str = self._resource.query(message=message, **kwargs)
+            return response.strip()
+        except pyvisa.VisaIOError as error:
+            raise IOError("Error communicating with the resource\n", error)
+
+
 class GpibInterface:
     """
     GpibInterface

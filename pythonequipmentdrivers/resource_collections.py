@@ -312,7 +312,10 @@ def connect_resources(config: Union[str, Path, dict],
                 init_sequence = meta_info.pop("init", [])
 
                 # create instance of Resource called 'name', any remaining
-                # items in meta_info will be passed as kwargs
+                # items in meta_info will be passed as kwargs.
+                # Support old config format with a nested "kwargs" key.
+                if "kwargs" in meta_info:
+                    meta_info.update(meta_info.pop("kwargs"))
                 resource = Resource(**meta_info)
 
             setattr(resources, name, resource)
