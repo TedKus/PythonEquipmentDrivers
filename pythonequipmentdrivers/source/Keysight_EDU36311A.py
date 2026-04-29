@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from ..core import VisaResource
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class _Channel:
     v_max: float
     i_max: float

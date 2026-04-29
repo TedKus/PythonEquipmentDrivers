@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from enum import Enum
 
 from ..core import VisaResource
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class _Limits:
     min: float
     max: float

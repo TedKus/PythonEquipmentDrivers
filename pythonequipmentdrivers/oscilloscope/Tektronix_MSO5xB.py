@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from enum import Enum
 from time import sleep
@@ -256,7 +258,7 @@ class Tektronix_MSO5xB(VisaResource):
         )  ### TODO:see if theres a better command for this
         return float(response)
 
-    @dataclass(frozen=True, slots=True)
+    @dataclass(frozen=True)
     class StatisticalSummary:
         mean: float
         stdev: float

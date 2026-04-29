@@ -149,7 +149,7 @@ class Chroma_63206A(VisaResource):  # 6 kW
         response = self.query_resource("MODE?")
 
         mode = response[:-1]
-        range_setting = response.removeprefix(mode)
+        range_setting = response[len(mode):] if response.startswith(mode) else response
 
         return (mode, range_setting)
 

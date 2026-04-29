@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 import re
 from dataclasses import dataclass
 
 from ..core import VisaResource
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class _Module:
     name: str
     v_max: float

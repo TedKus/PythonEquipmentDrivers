@@ -2,6 +2,8 @@
 # check_ESR
 # check_Modbus_error
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 
 from ..core import VisaResource
