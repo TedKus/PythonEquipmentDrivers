@@ -175,7 +175,7 @@ class Chroma_63206A(VisaResource):  # 6 kW
             cmd_str = f"CURR:STAT:L{channel} {current}"
             self.write_resource(cmd_str)
 
-    def get_current(self, channel: int) -> Union[float, Tuple[float]]:
+    def get_current(self, channel: int) -> Union[float, Tuple[float, float]]:
         """
         get_current(channel)
 
@@ -222,7 +222,7 @@ class Chroma_63206A(VisaResource):  # 6 kW
         else:
             self.write_resource(f"CURR:DYN:L{channel} {current}")
 
-    def get_dynamic_current(self, channel: int) -> Union[float, Tuple[float]]:
+    def get_dynamic_current(self, channel: int) -> Union[float, Tuple[float, float]]:
         """
         get_dynamic_current(channel)
 
@@ -269,7 +269,7 @@ class Chroma_63206A(VisaResource):  # 6 kW
         else:
             self.write_resource(f"CURR:DYN:T{channel} {t}")
 
-    def get_dynamic_current_time(self, channel: int) -> Union[float, Tuple[float]]:
+    def get_dynamic_current_time(self, channel: int) -> Union[float, Tuple[float, float]]:
         """
         get_dynamic_current_time(channel)
 
@@ -412,7 +412,7 @@ class Chroma_63206A(VisaResource):  # 6 kW
             cmd_str = f"RES:STAT:L{channel} {resistance}"
             self.write_resource(cmd_str)
 
-    def get_resistance(self, channel: int) -> Union[float, Tuple[float]]:
+    def get_resistance(self, channel: int) -> Union[float, Tuple[float, float]]:
         """
         get_resistance(channel)
 
@@ -458,7 +458,7 @@ class Chroma_63206A(VisaResource):  # 6 kW
         else:
             self.write_resource(f"VOLT:STAT:L{channel} {voltage}")
 
-    def get_voltage(self, channel: int) -> Union[float, Tuple[float]]:
+    def get_voltage(self, channel: int) -> Union[float, Tuple[float, float]]:
         """
         get_voltage(channel)
 
@@ -529,7 +529,7 @@ class Chroma_63206A(VisaResource):  # 6 kW
         else:
             self.write_resource(f"POW:STAT:L{channel} {power}")
 
-    def get_power(self, channel: int) -> Union[float, Tuple[float]]:
+    def get_power(self, channel: int) -> Union[float, Tuple[float, float]]:
         """
         get_power(channel)
 
